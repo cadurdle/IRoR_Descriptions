@@ -12,10 +12,16 @@ let experiment = {
     responses: []
 };
 
+console.log('Script loaded');
+
 function fetchStudyJson() {
+    console.log('Fetching study JSON');
     return fetch(jsonPath)
         .then(response => response.json())
-        .then(data => data.imageSets)
+        .then(data => {
+            console.log('Fetched study JSON:', data);
+            return data.imageSets;
+        })
         .catch(error => {
             console.error('Error fetching study.json:', error);
             return [];
@@ -23,10 +29,12 @@ function fetchStudyJson() {
 }
 
 function preloadImages(imageSets) {
+    console.log('Preloading images');
     let promises = [];
     imageSets.forEach(set => {
         set.images.forEach(imageName => {
             let path = `${basePath}/${set.condition}/${set.setNumber}/${imageName}`;
+            console.log('Preloading image:', path);
             promises.push(new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = path;
@@ -63,6 +71,7 @@ function showNextImage() {
 }
 
 function displayImage(path, word) {
+    console.log('Displaying image:', path, word);
     const experimentDiv = document.getElementById('experiment');
     experimentDiv.innerHTML = ''; // Clear previous content
 
@@ -98,6 +107,7 @@ function displayImage(path, word) {
 
 fetchStudyJson()
     .then(imageSets => {
+        console.log('Fetched image sets:', imageSets);
         imageSets.forEach(set => {
             set.images.forEach(imageName => {
                 experiment.imageSets.push({
@@ -121,7 +131,7 @@ fetchStudyJson()
 function formatWord(filename) {
     let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
-    name.replace(/_/g, ' ');
+    name = name.replace(/_/g, ' ');
     return name.toUpperCase();
 }
 
@@ -158,8 +168,8 @@ function saveToFile(filename, data) {
     a.click();
 }
 
-// Ensure this function shows the instructions and calls showInstructionPages() afterwards
 function showInstructions() {
+    console.log('Showing instructions');
     const instructionsDiv = document.getElementById('instructions');
     instructionsDiv.innerHTML = `
         <div class="instructions-content">
@@ -187,8 +197,8 @@ function showInstructions() {
     };
 }
 
-// Ensure this function shows the individual instruction pages and calls startTrials() afterwards
 function showInstructionPages() {
+    console.log('Showing instruction pages');
     const instructionsDiv = document.getElementById('instructions');
     let pages = [
         "Please make sure your internet window is full screen for this task.<br><br>Presentation may be affected by resized windows.<br><br>Please hit next.",
