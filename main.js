@@ -17,7 +17,8 @@ fetch('study.json')
         console.log('Fetched study.json:', data);
         // Load image sets from study.json
         data.imageSets.forEach(imageSet => {
-            imageSet.images.forEach(image => {
+            let sortedImages = imageSet.images.sort();
+            sortedImages.forEach(image => {
                 experiment.imageSets.push({
                     path: `/IRoR_Descriptions/images/${imageSet.condition}/${imageSet.setNumber}/${image}`,
                     word: formatWord(image),
@@ -270,6 +271,8 @@ function validateDetails(details, word) {
         if (!detailText || detailText.toUpperCase() === word) return false;
         // Check if the detail contains only alphabetic characters
         if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
+        // Check if the detail is a valid word (spell check)
+        if (dictionary && !dictionary.check(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
@@ -355,3 +358,11 @@ function saveResponsesToFile() {
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
     saveToFile(filename, data);
 }
+
+// Initialize Typo.js for spell checking
+let dictionary;
+new Typo("en_US", "/IRoR_Descriptions/typo/en_US.aff", "/IRoR_Descriptions/typo/en_US.dic", {
+    loadedCallback: function() {
+        dictionary = this;
+    }
+});
