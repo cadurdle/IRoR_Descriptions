@@ -67,10 +67,11 @@ function formatWord(filename) {
 function showInstructions() {
     console.log('Showing instructions');
     const instructionsDiv = document.getElementById('instructions');
-    instructionsDiv.innerHTML = "Welcome to the Experiment! Please press start.";
-    instructionsDiv.style.textAlign = 'center';
-    instructionsDiv.style.color = 'white';
-    instructionsDiv.style.fontSize = '24px';
+    instructionsDiv.innerHTML = `
+        <div class="instructions-content">
+            Welcome to the Experiment! Please press start.
+        </div>
+    `;
     waitForUserInput(showInstructionPages);
 }
 
@@ -86,17 +87,14 @@ function showInstructionPages() {
 
     function showPage(pageIndex) {
         if (pageIndex < pages.length) {
-            instructionsDiv.innerHTML = pages[pageIndex];
-            instructionsDiv.style.textAlign = 'center';
-            instructionsDiv.style.color = 'white';
-            instructionsDiv.style.fontSize = '20px';
-            let nextButton = document.createElement('button');
-            nextButton.innerText = 'Next';
-            nextButton.style.position = 'absolute';
-            nextButton.style.bottom = '20px';
-            nextButton.style.right = '20px';
+            instructionsDiv.innerHTML = `
+                <div class="instructions-content">
+                    ${pages[pageIndex]}
+                    <button class="next-button">Next</button>
+                </div>
+            `;
+            const nextButton = instructionsDiv.querySelector('.next-button');
             nextButton.onclick = () => showPage(pageIndex + 1);
-            instructionsDiv.appendChild(nextButton);
         } else {
             instructionsDiv.innerHTML = '';
             startExperiment();
