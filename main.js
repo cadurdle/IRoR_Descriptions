@@ -10,8 +10,8 @@ let experiment = {
 };
 
 function fetchImages(condition, setNumber) {
-    console.log(`Fetching images from /images/${condition}/${setNumber}`);
-    return fetch(`/images/${condition}/${setNumber}`)
+    console.log(`Fetching images from https://cadurdle.github.io/IRoR_Descriptions/images/${condition}/${setNumber}`);
+    return fetch(`https://cadurdle.github.io/IRoR_Descriptions/images/${condition}/${setNumber}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -44,7 +44,7 @@ function loadImagesFromPath(condition, set) {
         images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `/images/${condition}/${set}/${image}`,
+                path: `https://cadurdle.github.io/IRoR_Descriptions/images/${condition}/${set}/${image}`,
                 word: word,
                 condition: condition,
                 folder: set
