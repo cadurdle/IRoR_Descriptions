@@ -9,10 +9,29 @@ let experiment = {
     responses: []
 };
 
+// Fetch and process study.json
+fetch('study.json')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Fetched study.json:', data);
+        // Process study.json data here if necessary
+        // For example, store paths or configurations in experiment object
+        experiment.studyConfig = data;
+
+        // Preload images after fetching study.json
+        return preloadImages();
+    })
+    .then(() => {
+        console.log('Images preloaded');
+        showInstructions();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
 function fetchImages(condition, setNumber) {
-    const path = `/IRoR_Descriptions/images/${condition}/studyset${setNumber}`;
-    console.log(`Fetching images from ${path}`);
-    return fetch(path)
+    console.log(`Fetching images from /images/${condition}/${setNumber}`);
+    return fetch(`/images/${condition}/${setNumber}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -32,10 +51,10 @@ function fetchImages(condition, setNumber) {
 function preloadImages() {
     let promises = [];
     for (let i = 1; i <= experiment.congruentSets; i++) {
-        promises.push(loadImagesFromPath('congruent', i));
+        promises.push(loadImagesFromPath('congruent', `studyset${i}`));
     }
     for (let i = 1; i <= experiment.incongruentSets; i++) {
-        promises.push(loadImagesFromPath('incongruent', i));
+        promises.push(loadImagesFromPath('incongruent', `studyset${i}`));
     }
     return Promise.all(promises);
 }
@@ -45,13 +64,13 @@ function loadImagesFromPath(condition, set) {
         images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `/IRoR_Descriptions/images/${condition}/studyset${set}/${image}`,
+                path: `/images/${condition}/${set}/${image}`,
                 word: word,
                 condition: condition,
                 folder: set
             });
         });
-        console.log(`Loaded images from ${condition}_resources/studyset${set}`);
+        console.log(`Loaded images from ${condition}_resources/${set}`);
     });
 }
 
@@ -176,8 +195,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-	wordElement.style.marginBottom = '15px';
-	
+    wordElement.style.marginBottom = '15px';
+    
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -203,7 +222,7 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-		let input = document.createElement('input');
+        let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
@@ -221,10 +240,6 @@ function createInputFields(number, set) {
 
     createButton('Submit', () => saveResponse(set));
 }
-
-preloadImages().then(() => {
-    showInstructions();
-});
 
 function createButton(text, onClick) {
     let button = document.createElement('button');
@@ -352,14 +367,6 @@ function saveToFile(filename, data) {
     a.download = filename;
     a.click();
 }
-
-// Start by preloading images and then showing instructions
-preloadImages().then(() => {
-    console.log('Images preloaded');
-    showInstructions();
-}).catch(error => {
-    console.error('Error preloading images:', error);
-});
 
 function updateProgressBar() {
     const progressBarFill = document.getElementById('progress-bar-fill');
