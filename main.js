@@ -33,7 +33,7 @@ function preloadImages(imageSets) {
     let promises = [];
     imageSets.forEach(set => {
         set.images.forEach(imageName => {
-            let path = `${basePath}/${set.condition}/${set.setNumber}/${imageName}`;
+            let path = `${basePath}/${set.condition}_resources/${set.setNumber}/${imageName}`;
             console.log('Preloading image:', path);
             promises.push(new Promise((resolve, reject) => {
                 const img = new Image();
@@ -111,7 +111,7 @@ fetchStudyJson()
         imageSets.forEach(set => {
             set.images.forEach(imageName => {
                 experiment.imageSets.push({
-                    path: `${basePath}/${set.condition}/${set.setNumber}/${imageName}`,
+                    path: `${basePath}/${set.condition}_resources/${set.setNumber}/${imageName}`,
                     word: formatWord(imageName),
                     condition: set.condition,
                     folder: set.setNumber
@@ -201,11 +201,8 @@ function showInstructionPages() {
     console.log('Showing instruction pages');
     const instructionsDiv = document.getElementById('instructions');
     let pages = [
-        "Please make sure your internet window is full screen for this task.<br><br>Presentation may be affected by resized windows.<br><br>Please hit next.",
-        "In this computer task, you will see various images.<br><br>We are trying to understand what details people value the most when they remember something.<br><br>However, this is not a memory task.<br>We simply want to know what details of the image stand out to you.",
-        "In the task, you will see an image, a word in orange font to describe the image, and four text boxes below the image.<br><br>You need to describe each image using four essential details, one detail per text box.<br><br>Details can include many things, some examples to describe the image may be colors, shapes, textures, materials, environments, etc.<br>You can use 1 - 3 words per detail entry.<br><br>Please do not use the word in orange below the image in the details you list.",
-        "Keep in mind, that people in our next task will see the same images for 2 seconds at a time and have to recall them. We will be using the key details you provide to measure these next participants' performance.<br><br>Again, please give us 4 details you feel are essential to describe the image.<br><br>Remember, do not use the word in orange.",
-        "Please go as quickly as possible because participants in the next task will only see the image for a couple of seconds.<br><br>There are many images to get through.<br>Please pay close attention to spelling before submitting your detail descriptions.<br><br>There is no back button. You can only move forward through the task.<br>A progress bar is displayed at the bottom of the screen.<br>Please feel free to take breaks as needed.",
+        "Please make sure your internet window is full screen for this task.<br><br>Presentation is as follows:<br>An image will be presented on the screen with a word describing the image. Your task is to type four unique details that describe the image in the text boxes.<br><br>Examples of descriptions for the word “Ball” are:<br>1. It’s round.<br>2. It’s made of rubber.<br>3. It’s used in sports.<br>4. It bounces.",
+        "A few things to keep in mind:<br>Type only one detail per line.<br>Details should be specific, informative, and accurate.<br>You will not be able to go back and change your answers.<br>There is no back button. You can only move forward through the task.<br>A progress bar is displayed at the bottom of the screen.<br>Please feel free to take breaks as needed.",
         "Thank you for your time, effort, patience, and attention to detail!<br><br>Please hit Next to begin."
     ];
     let currentPage = 0;
