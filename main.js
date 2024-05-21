@@ -51,10 +51,10 @@ function fetchImages(condition, setNumber) {
 function preloadImages() {
     let promises = [];
     for (let i = 1; i <= experiment.congruentSets; i++) {
-        promises.push(loadImagesFromPath('congruent', `studyset${i}`));
+        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
     }
     for (let i = 1; i <= experiment.incongruentSets; i++) {
-        promises.push(loadImagesFromPath('incongruent', `studyset${i}`));
+        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
     }
     return Promise.all(promises);
 }
