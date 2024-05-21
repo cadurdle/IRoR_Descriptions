@@ -14,9 +14,11 @@ fetch('study.json')
     .then(response => response.json())
     .then(data => {
         console.log('Fetched study.json:', data);
-        // Process study.json data here if necessary
-        // For example, store paths or configurations in experiment object
-        experiment.studyConfig = data;
+        // Load image sets from study.json
+        experiment.imageSets = data.imageSets.map(imageSet => ({
+            condition: imageSet.condition,
+            setNumber: imageSet.setNumber
+        }));
 
         // Preload images after fetching study.json
         return preloadImages();
@@ -30,8 +32,9 @@ fetch('study.json')
     });
 
 function fetchImages(condition, setNumber) {
-    console.log(`Fetching images from /images/${condition}/${setNumber}`);
-    return fetch(`/images/${condition}/${setNumber}`)
+    const basePath = `/IRoR_Descriptions/images/${condition}/${setNumber}`;
+    console.log(`Fetching images from ${basePath}/index.json`);
+    return fetch(`${basePath}/index.json`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -40,7 +43,7 @@ function fetchImages(condition, setNumber) {
         })
         .then(images => {
             console.log(`Fetched images for ${condition} ${setNumber}:`, images);
-            return images;
+            return images.map(image => `${basePath}/${image}`);
         })
         .catch(error => {
             console.error('Error fetching images:', error);
@@ -49,13 +52,9 @@ function fetchImages(condition, setNumber) {
 }
 
 function preloadImages() {
-    let promises = [];
-    for (let i = 1; i <= experiment.congruentSets; i++) {
-        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
-    }
-    for (let i = 1; i <= experiment.incongruentSets; i++) {
-        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
-    }
+    let promises = experiment.imageSets.map(imageSet =>
+        loadImagesFromPath(imageSet.condition, imageSet.setNumber)
+    );
     return Promise.all(promises);
 }
 
@@ -64,18 +63,18 @@ function loadImagesFromPath(condition, set) {
         images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `/images/${condition}/${set}/${image}`,
+                path: image,
                 word: word,
                 condition: condition,
                 folder: set
             });
         });
-        console.log(`Loaded images from ${condition}_resources/${set}`);
+        console.log(`Loaded images from ${condition}/${set}`);
     });
 }
 
 function formatWord(filename) {
-    let name = filename.split('.jpg')[0];
+    let name = filename.split('/').pop().split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
     name = name.replace(/_/g, ' ');
     return name.toUpperCase();
@@ -231,7 +230,6 @@ function createInputFields(number, set) {
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
         
-       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -284,8 +282,6 @@ function displayImage(path, word) {
     createInputFields(4, { path: path, word: word });
 }
 
-//const typo = new Typo('en_US'); // Initialize Typo.js for spell-checking
-
 function validateDetails(details, word) {
     console.log('Validating details');
     if (details.length !== 4) return false;
@@ -296,9 +292,7 @@ function validateDetails(details, word) {
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word) return false;
         // Check if the detail contains only alphabetic characters
-        if (!/^[a-zA-Z]+$/.test(detailText)) return false;
-        // Check if the detail is a valid word (basic spell-checking)
-        if (!typo.check(detailText)) return false;
+        if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
