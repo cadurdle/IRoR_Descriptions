@@ -12,38 +12,117 @@ let experiment = {
     responses: []
 };
 
-console.log('Script loaded');
-
-function fetchStudyJson() {
-    console.log('Fetching study JSON');
-    return fetch(jsonPath)
-        .then(response => response.json())
-        .then(data => {
-            console.log('Fetched study JSON:', data);
-            return data.imageSets;
+function fetchImages(condition, setNumber) {
+    console.log(`Fetching images from /images/${condition}/${setNumber}`);
+    return fetch(`/images/${condition}/${setNumber}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(images => {
+            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
+            return images;
         })
         .catch(error => {
-            console.error('Error fetching study.json:', error);
+            console.error('Error fetching images:', error);
             return [];
         });
 }
 
-function preloadImages(imageSets) {
-    console.log('Preloading images');
+function preloadImages() {
     let promises = [];
-    imageSets.forEach(set => {
-        set.images.forEach(imageName => {
-            let path = `${basePath}/${set.condition}_resources/${set.setNumber}/${imageName}`;
-            console.log('Preloading image:', path);
-            promises.push(new Promise((resolve, reject) => {
-                const img = new Image();
-                img.src = path;
-                img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error(`Failed to load image at ${path}`));
-            }));
-        });
-    });
+    for (let i = 1; i <= experiment.congruentSets; i++) {
+        promises.push(loadImagesFromPath('congruent', `studyset${i}`));
+    }
+    for (let i = 1; i <= experiment.incongruentSets; i++) {
+        promises.push(loadImagesFromPath('incongruent', `studyset${i}`));
+    }
     return Promise.all(promises);
+}
+
+function loadImagesFromPath(condition, set) {
+    return fetchImages(condition, set).then(images => {
+        images.forEach(image => {
+            let word = formatWord(image);
+            experiment.imageSets.push({
+                path: `/images/${condition}/${set}/${image}`,
+                word: word,
+                condition: condition,
+                folder: set
+            });
+        });
+        console.log(`Loaded images from ${condition}_resources/${set}`);
+    });
+}
+
+function formatWord(filename) {
+    let name = filename.split('.jpg')[0];
+    name = name.replace(/[0-9]/g, '');
+    name = name.replace(/_/g, ' ');
+    return name.toUpperCase();
+}
+
+
+function showInstructions() {
+    const instructionsDiv = document.getElementById('instructions');
+    instructionsDiv.innerHTML = `
+        <div class="instructions-content">
+            <p>Welcome to the Experiment!<br>Please enter your name and press Start.</p>
+            <label for="participantName">Name:</label>
+            <input type="text" id="participantName" name="participantName" autocomplete="name" style="width: 300px; height: 30px; margin-top: 10px; margin-bottom: 20px;">
+            <button class="next-button" id="startButton">Start</button>
+        </div>
+    `;
+    instructionsDiv.style.display = 'flex';
+    instructionsDiv.style.flexDirection = 'column';
+    instructionsDiv.style.justifyContent = 'center';
+    instructionsDiv.style.alignItems = 'center';
+    instructionsDiv.style.height = '100vh'; // Ensure instructions div takes full height
+
+    const startButton = document.getElementById('startButton');
+    startButton.onclick = () => {
+        const nameInput = document.getElementById('participantName').value;
+        if (nameInput.trim() === '') {
+            alert('Please enter your name to start the experiment.');
+            return;
+        }
+        experiment.participantName = nameInput;
+        showInstructionPages();
+    };
+}
+
+function showInstructionPages() {
+    const instructionsDiv = document.getElementById('instructions');
+    let pages = [
+        "Please make sure your internet window is full screen for this task.<br><br>Presentation may be affected by resized windows.<br><br>Please hit next.",
+        "In this computer task, you will see various images.<br><br>We are trying to understand what details people value the most when they remember something.<br><br>However, this is not a memory task.<br>We simply want to know what details of the image stand out to you.",
+        "In the task, you will see an image, a word in orange font to describe the image, and four text boxes below the image.<br><br>You need to describe each image using four essential details, one detail per text box.<br><br>Details can include many things, some examples to describe the image may be colors, shapes, textures, materials, environments, etc.<br>You can use 1 - 3 words per detail entry.<br><br>Please do not use the word in orange below the image in the details you list.",
+        "Keep in mind, that people in our next task will see the same images for 2 seconds at a time and have to recall them. We will be using the key details you provide to measure these next participants' performance.<br><br>Again, please give us 4 details you feel are essential to describe the image.<br><br>Remember, do not use the word in orange.",
+        "Please go as quickly as possible because participants in the next task will only see the image for a couple of seconds.<br><br>There are many images to get through.<br>Please pay close attention to spelling before submitting your detail descriptions.<br><br>There is no back button. You can only move forward through the task.<br>A progress bar is displayed at the bottom of the screen.<br>Please feel free to take breaks as needed.",
+        "Thank you for your time, effort, patience, and attention to detail!<br><br>Please hit Next to begin."
+    ];
+    let currentPage = 0;
+
+    function showPage(pageIndex) {
+        if (pageIndex < pages.length) {
+            instructionsDiv.innerHTML = `
+                <div class="instructions-content">
+                    <p>${pages[pageIndex]}</p>
+                    <button class="next-button">Next</button>
+                </div>
+            `;
+            const nextButton = instructionsDiv.querySelector('.next-button');
+            nextButton.onclick = () => showPage(pageIndex + 1);
+        } else {
+            instructionsDiv.innerHTML = '';
+            document.getElementById('experiment').style.display = 'flex';
+            startTrials();
+        }
+    }
+
+    showPage(currentPage);
 }
 
 function startTrials() {
@@ -65,42 +144,9 @@ function showNextImage() {
     }
     let set = experiment.imageSets[setIndex];
     console.log(`Displaying image from path: ${set.path}`);
+    displayImage(set.path, set.word);
     createInputFields(4, set);
-    updateProgressBar();
-}
-
-function displayImage(path, word) {
-    console.log('Displaying image:', path, word);
-    const experimentDiv = document.getElementById('experiment');
-    experimentDiv.innerHTML = ''; // Clear previous content
-
-    let topDiv = document.createElement('div');
-    topDiv.style.display = 'flex';
-    topDiv.style.flexDirection = 'column';
-    topDiv.style.alignItems = 'center';
-    topDiv.style.justifyContent = 'center';
-    topDiv.style.flex = '0 0 auto'; // Adjust size
-
-    let img = document.createElement('img');
-    img.src = path;
-    img.alt = word;
-    img.style.display = 'block';
-    img.style.margin = '0 auto';
-    img.style.maxHeight = '300px'; // Adjust the size as needed
-    img.style.maxWidth = '100%';   // Adjust the size as needed
-    img.onerror = () => console.error(`Failed to load image at ${path}`);
-
-    let wordElement = document.createElement('div');
-    wordElement.innerText = word;
-    wordElement.style.color = 'orange';
-    wordElement.style.fontSize = '24px';
-    wordElement.style.marginTop = '20px';
-    wordElement.style.marginBottom = '20px';
-
-    topDiv.appendChild(img);
-    topDiv.appendChild(wordElement);
-
-    experimentDiv.appendChild(topDiv);
+    updateProgressBar();  // Update the progress bar
 }
 
 function createInputFields(number, set) {
@@ -133,8 +179,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-    wordElement.style.marginBottom = '15px';
-
+	wordElement.style.marginBottom = '15px';
+	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -160,15 +206,16 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-        let input = document.createElement('input');
+		let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
-        input.autocomplete = 'off';
+        input.autocomplete = `off`;
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-
+        
+       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -178,125 +225,158 @@ function createInputFields(number, set) {
     createButton('Submit', () => saveResponse(set));
 }
 
+preloadImages().then(() => {
+    showInstructions();
+});
+
 function createButton(text, onClick) {
-    const experimentDiv = document.getElementById('experiment');
     let button = document.createElement('button');
     button.innerText = text;
-    button.style.marginTop = '20px';
-    button.style.padding = '10px 20px';
     button.onclick = onClick;
-    experimentDiv.appendChild(button);
+    button.className = 'submit-button'; // Apply CSS class for styling
+    document.getElementById('experiment').appendChild(button);
+}
+
+function displayImage(path, word) {
+    console.log(`Displaying image: ${path}`);
+    const experimentDiv = document.getElementById('experiment');
+    experimentDiv.innerHTML = ''; // Clear previous content
+
+    let topDiv = document.createElement('div');
+    topDiv.style.display = 'flex';
+    topDiv.style.flexDirection = 'column';
+    topDiv.style.alignItems = 'center';
+    topDiv.style.justifyContent = 'center';
+    topDiv.style.flex = '0 0 auto'; // Adjust size
+
+    let img = document.createElement('img');
+    img.src = path;
+    img.alt = word;
+    img.style.display = 'block';
+    img.style.margin = '0 auto';
+    img.style.maxHeight = '300px'; // Adjust the size as needed
+    img.style.maxWidth = '100%';   // Adjust the size as needed
+    img.onerror = () => console.error(`Failed to load image at ${path}`);
+
+    let wordElement = document.createElement('div');
+    wordElement.innerText = word;
+    wordElement.style.color = 'orange';
+    wordElement.style.fontSize = '24px';
+    wordElement.style.marginTop = '20px';
+    wordElement.style.marginBottom = '20px';
+
+    topDiv.appendChild(img);
+    topDiv.appendChild(wordElement);
+
+    experimentDiv.appendChild(topDiv);
+    createInputFields(4, { path: path, word: word });
+}
+
+//const typo = new Typo('en_US'); // Initialize Typo.js for spell-checking
+
+function validateDetails(details, word) {
+    console.log('Validating details');
+    if (details.length !== 4) return false;
+
+    let detailSet = new Set();
+    for (let detail of details) {
+        let detailText = detail.trim();
+        // Check if the detail is empty or is the same as the descriptor word
+        if (!detailText || detailText.toUpperCase() === word) return false;
+        // Check if the detail contains only alphabetic characters
+        if (!/^[a-zA-Z]+$/.test(detailText)) return false;
+        // Check if the detail is a valid word (basic spell-checking)
+        if (!typo.check(detailText)) return false;
+        // Add detail to the set
+        detailSet.add(detailText.toUpperCase());
+    }
+    // Ensure all details are unique
+    if (detailSet.size !== details.length) return false;
+    return true;
 }
 
 function saveResponse(set) {
-    const details = [];
+    console.log('Saving response');
+    let details = [];
     for (let i = 1; i <= 4; i++) {
-        const detail = document.getElementById(`detail${i}`).value.trim();
-        details.push(detail);
+        details.push(document.getElementById(`detail${i}`).value);
     }
 
-    // Save the response
-    experiment.responses.push({
-        image: set.path,
-        word: set.word,
-        detail1: details[0],
-        detail2: details[1],
-        detail3: details[2],
-        detail4: details[3],
-        condition: set.condition,
-        folder: set.folder
-    });
-
-    // Move to the next image
-    experiment.currentImage++;
-    if (experiment.currentImage >= experiment.imagesPerBlock) {
-        experiment.currentImage = 0;
-        experiment.currentBlock++;
-    }
-    showNextImage();
-}
-
-fetchStudyJson()
-    .then(imageSets => {
-        console.log('Fetched image sets:', imageSets);
-        imageSets.forEach(set => {
-            set.images.forEach(imageName => {
-                experiment.imageSets.push({
-                    path: `${basePath}/${set.condition}_resources/${set.setNumber}/${imageName}`,
-                    word: formatWord(imageName),
-                    condition: set.condition,
-                    folder: set.setNumber
-                });
-            });
+    if (validateDetails(details, set.word)) {
+        experiment.responses.push({
+            image: set.path,
+            word: set.word,
+            detail1: details[0],
+            detail2: details[1],
+            detail3: details[2],
+            detail4: details[3],
+            condition: set.condition,
+            folder: set.folder
         });
-        return preloadImages(imageSets);
-    })
-    .then(() => {
-        console.log('Images preloaded');
-        showInstructions();
-    })
-    .catch(error => {
-        console.error('Error preloading images:', error);
-    });
-
-function formatWord(filename) {
-    let name = filename.split('.jpg')[0];
-    name = name.replace(/[0-9]/g, '');
-    name = name.replace(/_/g, ' ');
-    return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-function updateProgressBar() {
-    const progressBarContainer = document.getElementById('progress-bar-container');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressLabel = document.getElementById('progress-label');
-
-    if (experiment.currentBlock >= experiment.blocks) {
-        progressBarContainer.style.display = 'none';
-        return;
+        experiment.currentImage++;
+        if (experiment.currentImage >= experiment.imagesPerBlock) {
+            experiment.currentImage = 0;
+            experiment.currentBlock++;
+        }
+        showNextImage();
+    } else {
+        alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
-
-    progressBarContainer.style.display = 'block';
-
-    const totalImages = experiment.blocks * experiment.imagesPerBlock;
-    const currentProgress = experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage + 1;
-    const progressPercentage = (currentProgress / totalImages) * 100;
-
-    progressBarFill.style.width = `${progressPercentage}%`;
-    progressLabel.innerText = `Progress: ${currentProgress}/${totalImages}`;
 }
 
 function endExperiment() {
-    console.log('Experiment ended');
-    // You can implement the code to show a message to the participant or save their responses.
+    console.log('Ending experiment');
+    showThankYouMessage();
+    saveResponsesToFile();
 }
 
-function showInstructions() {
-    const instructionsDiv = document.getElementById('instructions');
-    const pages = [
-        "Welcome to the experiment. In this study, you will be asked to describe images presented to you.<br><br>Click Next to continue.",
-        "The task is as follows:<br>An image will be presented on the screen with a word describing the image. Your task is to type four unique details that describe the image in the text boxes.<br><br>Examples of descriptions for the word “Ball” are:<br>1. It’s round.<br>2. It’s made of rubber.<br>3. It’s used in sports.<br>4. It bounces.",
-        "A few things to keep in mind:<br>Type only one detail per line.<br>Details should be specific, informative, and accurate.<br>You will not be able to go back and change your answers.<br>There is no back button. You can only move forward through the task.<br>A progress bar is displayed at the bottom of the screen.<br>Please feel free to take breaks as needed.",
-        "Thank you for your time, effort, patience, and attention to detail!<br><br>Please hit Next to begin."
-    ];
-    let currentPage = 0;
+function showThankYouMessage() {
+    displayText("Thank you for participating!", 'instructions');
+}
 
-    function showPage(pageIndex) {
-        if (pageIndex < pages.length) {
-            instructionsDiv.innerHTML = `
-                <div class="instructions-content">
-                    <p>${pages[pageIndex]}</p>
-                    <button class="next-button">Next</button>
-                </div>
-            `;
-            const nextButton = instructionsDiv.querySelector('.next-button');
-            nextButton.onclick = () => showPage(pageIndex + 1);
-        } else {
-            instructionsDiv.innerHTML = '';
-            document.getElementById('experiment').style.display = 'flex';
-            startTrials();
-        }
-    }
+function displayText(text, elementId) {
+    const element = document.getElementById(elementId);
+    element.innerText = text;
+    element.style.color = 'white';
+}
 
-    showPage(currentPage);
+function getFormattedDate() {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}${day}${year}`;
+}
+
+function saveToFile(filename, data) {
+    let blob = new Blob([data], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}
+
+// Start by preloading images and then showing instructions
+preloadImages().then(() => {
+    console.log('Images preloaded');
+    showInstructions();
+}).catch(error => {
+    console.error('Error preloading images:', error);
+});
+
+function updateProgressBar() {
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+    progressBarFill.style.width = `${progressPercentage}%`;
+}
+
+function saveResponsesToFile() {
+    console.log('Saving responses to file');
+    let data = "image,word,detail1,detail2,detail3,detail4,condition,folder\n";
+    experiment.responses.forEach(response => {
+        data += `${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
 }
