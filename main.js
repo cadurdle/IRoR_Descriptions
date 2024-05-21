@@ -26,7 +26,7 @@ function preloadImages(imageSets) {
     let promises = [];
     imageSets.forEach(set => {
         set.images.forEach(imageName => {
-            let path = `${basePath}/${imageName}`;
+            let path = `${basePath}/${set.condition}/${set.setNumber}/${imageName}`;
             promises.push(new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = path;
@@ -121,7 +121,7 @@ fetchStudyJson()
 function formatWord(filename) {
     let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
-    name = name.replace(/_/g, ' ');
+    name.replace(/_/g, ' ');
     return name.toUpperCase();
 }
 
