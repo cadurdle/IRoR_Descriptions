@@ -6,7 +6,8 @@ let experiment = {
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
-    responses: []
+    responses: [],
+    participantName: ''
 };
 
 // Fetch and process study.json
@@ -15,10 +16,16 @@ fetch('study.json')
     .then(data => {
         console.log('Fetched study.json:', data);
         // Load image sets from study.json
-        experiment.imageSets = data.imageSets.map(imageSet => ({
-            condition: imageSet.condition,
-            setNumber: imageSet.setNumber
-        }));
+        data.imageSets.forEach(imageSet => {
+            imageSet.images.forEach(image => {
+                experiment.imageSets.push({
+                    path: `/IRoR_Descriptions/images/${imageSet.condition}/${imageSet.setNumber}/${image}`,
+                    word: formatWord(image),
+                    condition: imageSet.condition,
+                    folder: imageSet.setNumber
+                });
+            });
+        });
 
         // Preload images after fetching study.json
         return preloadImages();
@@ -31,50 +38,20 @@ fetch('study.json')
         console.error('Error:', error);
     });
 
-function fetchImages(condition, setNumber) {
-    const basePath = `/IRoR_Descriptions/images/${condition}/${setNumber}`;
-    console.log(`Fetching images from ${basePath}/index.json`);
-    return fetch(`${basePath}/index.json`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(images => {
-            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
-            return images.map(image => `${basePath}/${image}`);
-        })
-        .catch(error => {
-            console.error('Error fetching images:', error);
-            return [];
-        });
-}
-
 function preloadImages() {
     let promises = experiment.imageSets.map(imageSet =>
-        loadImagesFromPath(imageSet.condition, imageSet.setNumber)
+        new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = imageSet.path;
+            img.onload = resolve;
+            img.onerror = reject;
+        })
     );
     return Promise.all(promises);
 }
 
-function loadImagesFromPath(condition, set) {
-    return fetchImages(condition, set).then(images => {
-        images.forEach(image => {
-            let word = formatWord(image);
-            experiment.imageSets.push({
-                path: image,
-                word: word,
-                condition: condition,
-                folder: set
-            });
-        });
-        console.log(`Loaded images from ${condition}/${set}`);
-    });
-}
-
 function formatWord(filename) {
-    let name = filename.split('/').pop().split('.jpg')[0];
+    let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
     name = name.replace(/_/g, ' ');
     return name.toUpperCase();
