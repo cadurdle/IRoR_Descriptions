@@ -65,9 +65,8 @@ function showNextImage() {
     }
     let set = experiment.imageSets[setIndex];
     console.log(`Displaying image from path: ${set.path}`);
-    displayImage(set.path, set.word);
     createInputFields(4, set);
-    updateProgressBar();  // Update the progress bar
+    updateProgressBar();
 }
 
 function displayImage(path, word) {
@@ -102,7 +101,119 @@ function displayImage(path, word) {
     topDiv.appendChild(wordElement);
 
     experimentDiv.appendChild(topDiv);
-    createInputFields(4, { path: path, word: word });
+}
+
+function createInputFields(number, set) {
+    const experimentDiv = document.getElementById('experiment');
+    experimentDiv.innerHTML = ''; // Clear previous content
+    experimentDiv.style.display = 'flex';
+    experimentDiv.style.flexDirection = 'column';
+    experimentDiv.style.justifyContent = 'center';
+    experimentDiv.style.alignItems = 'center';
+    experimentDiv.style.height = '90vh'; // Adjust height to make room for progress bar
+
+    // Ensure image and word are displayed in the top half
+    let topDiv = document.createElement('div');
+    topDiv.style.display = 'flex';
+    topDiv.style.flexDirection = 'column';
+    topDiv.style.alignItems = 'center';
+    topDiv.style.justifyContent = 'center';
+    topDiv.style.flex = '0 0 auto'; // Adjust size
+
+    let img = document.createElement('img');
+    img.src = set.path;
+    img.alt = set.word;
+    img.style.display = 'block';
+    img.style.maxHeight = '375px'; // Adjust the size as needed
+    img.style.maxWidth = '100%';   // Adjust the size as needed
+    img.onerror = () => console.error(`Failed to load image at ${img.src}`);
+
+    let wordElement = document.createElement('div');
+    wordElement.innerText = set.word;
+    wordElement.style.color = 'orange';
+    wordElement.style.fontSize = '24px';
+    wordElement.style.marginTop = '15px';
+    wordElement.style.marginBottom = '15px';
+
+    topDiv.appendChild(img);
+    topDiv.appendChild(wordElement);
+
+    experimentDiv.appendChild(topDiv);
+
+    let bottomDiv = document.createElement('div');
+    bottomDiv.style.display = 'flex';
+    bottomDiv.style.flexDirection = 'column';
+    bottomDiv.style.alignItems = 'center';
+    bottomDiv.style.justifyContent = 'center';
+    bottomDiv.style.flex = '1'; // Adjust size
+
+    for (let i = 0; i < number; i++) {
+        let container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.justifyContent = 'center';
+        container.style.alignItems = 'center';
+        container.style.marginBottom = '15px'; // Increased space between input containers
+
+        let label = document.createElement('label');
+        label.innerText = `Detail ${i + 1}`;
+        label.style.color = 'white';
+        label.style.marginRight = '10px';
+        label.setAttribute('for', `detail${i + 1}`);
+
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.id = `detail${i + 1}`;
+        input.name = `detail${i + 1}`;
+        input.autocomplete = 'off';
+        input.style.flex = '1';
+        input.style.width = '300px'; // Adjusted width
+        input.style.height = '20px'; // Adjusted height
+
+        container.appendChild(label);
+        container.appendChild(input);
+        bottomDiv.appendChild(container);
+    }
+    experimentDiv.appendChild(bottomDiv);
+
+    createButton('Submit', () => saveResponse(set));
+}
+
+function createButton(text, onClick) {
+    const experimentDiv = document.getElementById('experiment');
+    let button = document.createElement('button');
+    button.innerText = text;
+    button.style.marginTop = '20px';
+    button.style.padding = '10px 20px';
+    button.onclick = onClick;
+    experimentDiv.appendChild(button);
+}
+
+function saveResponse(set) {
+    const details = [];
+    for (let i = 1; i <= 4; i++) {
+        const detail = document.getElementById(`detail${i}`).value.trim();
+        details.push(detail);
+    }
+
+    // Save the response
+    experiment.responses.push({
+        image: set.path,
+        word: set.word,
+        detail1: details[0],
+        detail2: details[1],
+        detail3: details[2],
+        detail4: details[3],
+        condition: set.condition,
+        folder: set.folder
+    });
+
+    // Move to the next image
+    experiment.currentImage++;
+    if (experiment.currentImage >= experiment.imagesPerBlock) {
+        experiment.currentImage = 0;
+        experiment.currentBlock++;
+    }
+    showNextImage();
 }
 
 fetchStudyJson()
@@ -132,76 +243,39 @@ function formatWord(filename) {
     let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
     name = name.replace(/_/g, ' ');
-    return name.toUpperCase();
+    return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 function updateProgressBar() {
+    const progressBarContainer = document.getElementById('progress-bar-container');
     const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+    const progressLabel = document.getElementById('progress-label');
+
+    if (experiment.currentBlock >= experiment.blocks) {
+        progressBarContainer.style.display = 'none';
+        return;
+    }
+
+    progressBarContainer.style.display = 'block';
+
+    const totalImages = experiment.blocks * experiment.imagesPerBlock;
+    const currentProgress = experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage + 1;
+    const progressPercentage = (currentProgress / totalImages) * 100;
+
     progressBarFill.style.width = `${progressPercentage}%`;
+    progressLabel.innerText = `Progress: ${currentProgress}/${totalImages}`;
 }
 
-function saveResponsesToFile() {
-    console.log('Saving responses to file');
-    let data = "image,word,detail1,detail2,detail3,detail4,condition,folder\n";
-    experiment.responses.forEach(response => {
-        data += `${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
-    });
-
-    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
-}
-
-function getFormattedDate() {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}${day}${year}`;
-}
-
-function saveToFile(filename, data) {
-    let blob = new Blob([data], { type: 'text/csv' });
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
+function endExperiment() {
+    console.log('Experiment ended');
+    // You can implement the code to show a message to the participant or save their responses.
 }
 
 function showInstructions() {
-    console.log('Showing instructions');
     const instructionsDiv = document.getElementById('instructions');
-    instructionsDiv.innerHTML = `
-        <div class="instructions-content">
-            <p>Welcome to the Experiment!<br>Please enter your name and press Start.</p>
-            <label for="participantName">Name:</label>
-            <input type="text" id="participantName" name="participantName" autocomplete="name" style="width: 300px; height: 30px; margin-top: 10px; margin-bottom: 20px;">
-            <button class="next-button" id="startButton">Start</button>
-        </div>
-    `;
-    instructionsDiv.style.display = 'flex';
-    instructionsDiv.style.flexDirection = 'column';
-    instructionsDiv.style.justifyContent = 'center';
-    instructionsDiv.style.alignItems = 'center';
-    instructionsDiv.style.height = '100vh'; // Ensure instructions div takes full height
-
-    const startButton = document.getElementById('startButton');
-    startButton.onclick = () => {
-        const nameInput = document.getElementById('participantName').value;
-        if (nameInput.trim() === '') {
-            alert('Please enter your name to start the experiment.');
-            return;
-        }
-        experiment.participantName = nameInput;
-        showInstructionPages();
-    };
-}
-
-function showInstructionPages() {
-    console.log('Showing instruction pages');
-    const instructionsDiv = document.getElementById('instructions');
-    let pages = [
-        "Please make sure your internet window is full screen for this task.<br><br>Presentation is as follows:<br>An image will be presented on the screen with a word describing the image. Your task is to type four unique details that describe the image in the text boxes.<br><br>Examples of descriptions for the word “Ball” are:<br>1. It’s round.<br>2. It’s made of rubber.<br>3. It’s used in sports.<br>4. It bounces.",
+    const pages = [
+        "Welcome to the experiment. In this study, you will be asked to describe images presented to you.<br><br>Click Next to continue.",
+        "The task is as follows:<br>An image will be presented on the screen with a word describing the image. Your task is to type four unique details that describe the image in the text boxes.<br><br>Examples of descriptions for the word “Ball” are:<br>1. It’s round.<br>2. It’s made of rubber.<br>3. It’s used in sports.<br>4. It bounces.",
         "A few things to keep in mind:<br>Type only one detail per line.<br>Details should be specific, informative, and accurate.<br>You will not be able to go back and change your answers.<br>There is no back button. You can only move forward through the task.<br>A progress bar is displayed at the bottom of the screen.<br>Please feel free to take breaks as needed.",
         "Thank you for your time, effort, patience, and attention to detail!<br><br>Please hit Next to begin."
     ];
