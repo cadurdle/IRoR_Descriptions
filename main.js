@@ -13,8 +13,9 @@ let experiment = {
 };
 
 function fetchImages(condition, setNumber) {
-    console.log(`Fetching images from /images/${condition}/${setNumber}`);
-    return fetch(`/images/${condition}/${setNumber}`)
+    const path = `${basePath}/${condition}/${setNumber}`;
+    console.log(`Fetching images from ${path}`);
+    return fetch(path)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -122,8 +123,8 @@ function showNextImage() {
         return;
     }
     let set = experiment.imageSets[setIndex];
-    console.log(`Displaying image from path: /images/${set.path}`);
-    displayImage(`/images/${set.path}`, set.word);
+    console.log(`Displaying image from path: ${basePath}/${set.path}`);
+    displayImage(`${basePath}/${set.path}`, set.word);
     createInputFields(4, set);
 }
 
@@ -145,7 +146,7 @@ function createInputFields(number, set) {
     topDiv.style.height = '50%';
 
     let img = document.createElement('img');
-    img.src = `/images/${set.path}`;
+    img.src = `${basePath}/${set.path}`;
     img.alt = set.word;
     img.style.display = 'block';
     img.style.maxHeight = '300px'; // Adjust the size as needed
