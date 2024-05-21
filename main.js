@@ -13,9 +13,8 @@ let experiment = {
 };
 
 function fetchImages(condition, setNumber) {
-    const path = `${basePath}/${condition}/${setNumber}`;
-    console.log(`Fetching images from ${path}`);
-    return fetch(path)
+    console.log(`Fetching images from /images/${condition}/${setNumber}`);
+    return fetch(`/images/${condition}/${setNumber}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -48,7 +47,7 @@ function loadImagesFromPath(condition, set) {
         images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `${condition}/${set}/${image}`,
+                path: `/images/${condition}/${set}/${image}`,
                 word: word,
                 condition: condition,
                 folder: set
@@ -123,8 +122,8 @@ function showNextImage() {
         return;
     }
     let set = experiment.imageSets[setIndex];
-    console.log(`Displaying image from path: ${basePath}/${set.path}`);
-    displayImage(`${basePath}/${set.path}`, set.word);
+    console.log(`Displaying image from path: ${set.path}`);
+    displayImage(set.path, set.word);
     createInputFields(4, set);
 }
 
@@ -133,31 +132,28 @@ function createInputFields(number, set) {
     experimentDiv.innerHTML = ''; // Clear previous content
     experimentDiv.style.display = 'flex';
     experimentDiv.style.flexDirection = 'column';
-    experimentDiv.style.justifyContent = 'space-between';
     experimentDiv.style.alignItems = 'center';
+    experimentDiv.style.justifyContent = 'center';
     experimentDiv.style.height = '100vh';
 
-    // Ensure image and word are displayed in the top half
     let topDiv = document.createElement('div');
     topDiv.style.display = 'flex';
     topDiv.style.flexDirection = 'column';
     topDiv.style.alignItems = 'center';
     topDiv.style.justifyContent = 'center';
-    topDiv.style.height = '50%';
+    topDiv.style.marginBottom = '20px';
 
     let img = document.createElement('img');
-    img.src = `${basePath}/${set.path}`;
+    img.src = set.path;
     img.alt = set.word;
     img.style.display = 'block';
-    img.style.maxHeight = '300px'; // Adjust the size as needed
-    img.style.maxWidth = '100%';   // Adjust the size as needed
+    img.style.maxHeight = '300px';
+    img.style.maxWidth = '100%';
     img.onerror = () => console.error(`Failed to load image at ${img.src}`);
 
     let wordElement = document.createElement('div');
     wordElement.innerText = set.word;
-    wordElement.style.color = 'orange';
-    wordElement.style.fontSize = '24px';
-    wordElement.style.marginTop = '10px';
+    wordElement.classList.add('word');
 
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
@@ -168,27 +164,18 @@ function createInputFields(number, set) {
     bottomDiv.style.display = 'flex';
     bottomDiv.style.flexDirection = 'column';
     bottomDiv.style.alignItems = 'center';
-    bottomDiv.style.justifyContent = 'center';
-    bottomDiv.style.height = '50%';
+    bottomDiv.style.marginTop = '10px';
 
     for (let i = 0; i < number; i++) {
         let container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.justifyContent = 'center';
-        container.style.alignItems = 'center';
-        container.style.marginBottom = '10px';
+        container.classList.add('input-container');
 
         let label = document.createElement('label');
         label.innerText = `Detail ${i + 1}`;
-        label.style.color = 'white';
-        label.style.marginRight = '10px';
 
         let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
-        input.style.flex = '1';
-        input.style.width = '300px'; // Adjusted width
-        input.style.height = '20px'; // Adjusted height
 
         container.appendChild(label);
         container.appendChild(input);
@@ -273,22 +260,20 @@ function displayImage(path, word) {
     topDiv.style.flexDirection = 'column';
     topDiv.style.alignItems = 'center';
     topDiv.style.justifyContent = 'center';
-    topDiv.style.height = '50%';
+    topDiv.style.marginBottom = '20px';
 
     let img = document.createElement('img');
     img.src = path;
     img.alt = word;
     img.style.display = 'block';
     img.style.margin = '0 auto';
-    img.style.maxHeight = '300px'; // Adjust the size as needed
-    img.style.maxWidth = '100%';   // Adjust the size as needed
+    img.style.maxHeight = '300px';
+    img.style.maxWidth = '100%';
     img.onerror = () => console.error(`Failed to load image at ${path}`);
 
     let wordElement = document.createElement('div');
     wordElement.innerText = word;
-    wordElement.style.color = 'orange';
-    wordElement.style.fontSize = '24px';
-    wordElement.style.marginTop = '10px';
+    wordElement.classList.add('word');
 
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
@@ -301,19 +286,7 @@ function createButton(text, onClick) {
     let button = document.createElement('button');
     button.innerText = text;
     button.onclick = onClick;
-    button.style.marginTop = '10px';
-    button.style.padding = '10px 20px';
-    button.style.fontSize = '18px';
-    button.style.backgroundColor = '#ff6600';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.cursor = 'pointer';
-    button.onmouseover = function() {
-        button.style.backgroundColor = '#cc5200';
-    }
-    button.onmouseout = function() {
-        button.style.backgroundColor = '#ff6600';
-    }
+    button.classList.add('submit-button');
     document.getElementById('experiment').appendChild(button);
 }
 
@@ -322,19 +295,7 @@ function waitForUserInput(callback) {
     const button = document.createElement('button');
     button.innerText = 'Start';
     button.onclick = callback;
-    button.style.marginTop = '10px';
-    button.style.padding = '10px 20px';
-    button.style.fontSize = '18px';
-    button.style.backgroundColor = '#ff6600';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.cursor = 'pointer';
-    button.onmouseover = function() {
-        button.style.backgroundColor = '#cc5200';
-    }
-    button.onmouseout = function() {
-        button.style.backgroundColor = '#ff6600';
-    }
+    button.classList.add('next-button');
     instructionsDiv.innerHTML = ''; // Clear previous content
     instructionsDiv.appendChild(button);
 }
