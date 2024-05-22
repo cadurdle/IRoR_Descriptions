@@ -100,6 +100,7 @@ input[type="text"] {
     background-color: #ddd;
     border-radius: 5px;
     overflow: hidden;
+    position: relative;
 }
 
 #progress-bar-fill {
@@ -107,4 +108,7 @@ input[type="text"] {
     height: 20px;
     background-color: #007bff; /* Change the color of the progress bar fill to blue */
     transition: width 0.3s;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
