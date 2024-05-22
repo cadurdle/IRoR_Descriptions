@@ -11,9 +11,8 @@ let experiment = {
 };
 
 function fetchImages(condition, setNumber) {
-    const url = `/IRoR_Descriptions/images/${condition}/${setNumber}`;
-    console.log(`Fetching images from ${url}`);
-    return fetch(url)
+    console.log(`Fetching images from /IRoR_Descriptions/images/${condition}/${setNumber}`);
+    return fetch(`/IRoR_Descriptions/images/${condition}/${setNumber}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -77,7 +76,7 @@ function showInstructions() {
     instructionsDiv.style.flexDirection = 'column';
     instructionsDiv.style.justifyContent = 'center';
     instructionsDiv.style.alignItems = 'center';
-    instructionsDiv.style.height = '100vh';
+    instructionsDiv.style.height = '100vh'; // Ensure instructions div takes full height
 
     const startButton = document.getElementById('startButton');
     startButton.onclick = () => {
@@ -145,7 +144,7 @@ function showNextImage() {
     console.log(`Displaying image from path: ${set.path}`);
     displayImage(set.path, set.word);
     createInputFields(4, set);
-    updateProgressBar();
+    updateProgressBar();  // Update the progress bar
 }
 
 function createInputFields(number, set) {
@@ -178,8 +177,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-    wordElement.style.marginBottom = '15px';
-
+	wordElement.style.marginBottom = '15px';
+	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -205,15 +204,16 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-        let input = document.createElement('input');
+		let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
-        input.autocomplete = 'off';
+        input.autocomplete = `off`;
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-
+        
+       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -348,13 +348,6 @@ function saveToFile(filename, data) {
     a.click();
 }
 
-preloadImages().then(() => {
-    console.log('Images preloaded');
-    showInstructions();
-}).catch(error => {
-    console.error('Error preloading images:', error);
-});
-
 function updateProgressBar() {
     const progressBarFill = document.getElementById('progress-bar-fill');
     const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
@@ -371,3 +364,10 @@ function saveResponsesToFile() {
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
     saveToFile(filename, data);
 }
+
+preloadImages().then(() => {
+    console.log('Images preloaded');
+    showInstructions();
+}).catch(error => {
+    console.error('Error preloading images:', error);
+});
