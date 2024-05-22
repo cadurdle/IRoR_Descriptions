@@ -333,14 +333,19 @@ function saveResponse(set) {
             folder: set.folder
         };
 
-        fetch('https://script.google.com/macros/s/AKfycbw9hhwouQhZUuZD7QJxfkIK4LNcnxYCuok8cY1-pk4bwjkh9vOXl08ca1YH36kKlG0Uug/exec', {
+        fetch('https://script.google.com/macros/s/AKfycbxSjJ_v2egJ_yxuRnQB60T0Ika3ThIMf1qgLHNB6gef3prhZPvlMQ9eL0kAh89VMVEHIQ/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(responseData => {
             console.log('Data saved successfully:', responseData);
         })
