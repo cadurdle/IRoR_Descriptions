@@ -149,10 +149,6 @@ function showNextImage() {
     displayImage(set.path, set.word);
     createInputFields(4, set);
     updateProgressBar();  // Update the progress bar
-    
-     // Save data after every block
-    if (experiment.currentImage === 0 && experiment.currentBlock > 0) {
-        saveResponsesToFile();
 }
 
 function createInputFields(number, set) {
