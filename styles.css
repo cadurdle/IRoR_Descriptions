@@ -72,11 +72,10 @@ input[type="text"] {
 
 #progress-bar-container {
     position: fixed;
-    bottom: 20px; /* Adjust the distance from the bottom */
-    width: 50%; /* Set the width to 50% of the screen */
-    left: 25%; /* Center the progress bar horizontally */
+    bottom: 40px; /* Move the progress bar up */
+    width: 60%; /* Set the width to 60% of the screen */
+    left: 20%; /* Center the progress bar horizontally */
     background-color: black;
-    border-top: 1px solid blue;
     padding: 5px 0;
     display: flex;
     justify-content: center; /* Center the progress bar horizontally */
@@ -87,7 +86,6 @@ input[type="text"] {
 #progress-bar-wrapper {
     display: flex;
     align-items: center;
-    justify-content: center;
     width: 100%; /* Use 100% width to fill the wrapper */
 }
 
@@ -95,10 +93,11 @@ input[type="text"] {
     margin-right: 10px;
     font-size: 14px;
     color: white; /* Change the color of the progress label to white */
+    flex: 0 0 auto; /* Prevent the label from stretching */
 }
 
 #progress-bar {
-    width: 100%; /* Use 100% width to fill the wrapper */
+    flex: 1; /* Allow the progress bar to fill the remaining space */
     background-color: black; /* Set the inside color to black */
     border: 2px solid blue; /* Set the outline color to blue */
     border-radius: 5px;
