@@ -6,49 +6,53 @@ let experiment = {
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
-    responses: [],
-    participantName: ''
+    responses: []
 };
 
-// Fetch and process study.json
-fetch('study.json')
-    .then(response => response.json())
-    .then(data => {
-        console.log('Fetched study.json:', data);
-        // Load image sets from study.json
-        data.imageSets.forEach(imageSet => {
-            let sortedImages = imageSet.images.sort();
-            sortedImages.forEach(image => {
-                experiment.imageSets.push({
-                    path: `/IRoR_Descriptions/images/${imageSet.condition}/${imageSet.setNumber}/${image}`,
-                    word: formatWord(image),
-                    condition: imageSet.condition,
-                    folder: imageSet.setNumber
-                });
-            });
+function fetchImages(condition, setNumber) {
+    console.log(`Fetching images from /IRoR_Descriptions/images/${condition}/${setNumber}`);
+    return fetch(`/IRoR_Descriptions/images/${condition}/${setNumber}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(images => {
+            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
+            return images;
+        })
+        .catch(error => {
+            console.error('Error fetching images:', error);
+            return [];
         });
-
-        // Preload images after fetching study.json
-        return preloadImages();
-    })
-    .then(() => {
-        console.log('Images preloaded');
-        showInstructions();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+}
 
 function preloadImages() {
-    let promises = experiment.imageSets.map(imageSet =>
-        new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = imageSet.path;
-            img.onload = resolve;
-            img.onerror = reject;
-        })
-    );
+    let promises = [];
+    for (let i = 1; i <= experiment.congruentSets; i++) {
+        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
+    }
+    for (let i = 1; i <= experiment.incongruentSets; i++) {
+        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
+    }
     return Promise.all(promises);
+}
+
+function loadImagesFromPath(condition, set) {
+    return fetchImages(condition, set).then(images => {
+        images.sort(); // Sort images alphabetically
+        images.forEach(image => {
+            let word = formatWord(image);
+            experiment.imageSets.push({
+                path: `/IRoR_Descriptions/images/${condition}/${set}/${image}`,
+                word: word,
+                condition: condition,
+                folder: set
+            });
+        });
+        console.log(`Loaded images from ${condition}/${set}`);
+    });
 }
 
 function formatWord(filename) {
@@ -111,7 +115,6 @@ function showInstructionPages() {
         } else {
             instructionsDiv.innerHTML = '';
             document.getElementById('experiment').style.display = 'flex';
-            document.getElementById('progress-bar-container').style.display = 'block'; // Show the progress bar
             startTrials();
         }
     }
@@ -124,8 +127,6 @@ function startTrials() {
     document.getElementById('progress-bar-container').style.display = 'flex';
     showNextImage();
 }
-
-
 
 function showNextImage() {
     console.log('Showing next image');
@@ -177,7 +178,7 @@ function createInputFields(number, set) {
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
     wordElement.style.marginBottom = '15px';
-    
+
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -211,7 +212,7 @@ function createInputFields(number, set) {
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-        
+
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -264,6 +265,8 @@ function displayImage(path, word) {
     createInputFields(4, { path: path, word: word });
 }
 
+//const typo = new Typo('/IRoR_Descriptions/typo/dictionaries/en_US/en_US'); // Initialize Typo.js for spell-checking
+
 function validateDetails(details, word) {
     console.log('Validating details');
     if (details.length !== 4) return false;
@@ -276,7 +279,7 @@ function validateDetails(details, word) {
         // Check if the detail contains only alphabetic characters
         if (!/^[a-zA-Z]+$/.test(detailText)) return false;
         // Check if the detail is a valid word (basic spell-checking)
-        if (!typo.check(detailText)) return false;
+        //if (!typo.check(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
@@ -362,3 +365,11 @@ function saveResponsesToFile() {
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
     saveToFile(filename, data);
 }
+
+// Start by preloading images and then showing instructions
+preloadImages().then(() => {
+    console.log('Images preloaded');
+    showInstructions();
+}).catch(error => {
+    console.error('Error preloading images:', error);
+});
