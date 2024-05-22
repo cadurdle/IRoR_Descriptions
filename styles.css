@@ -77,12 +77,15 @@ input[type="text"] {
     background-color: #f3f3f3;
     border-top: 1px solid #ccc;
     padding: 5px 0;
+    display: flex;
+    justify-content: center;
 }
 
 #progress-bar-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 70%; /* Set the width you want for the progress bar wrapper */
 }
 
 #progress-label {
@@ -91,7 +94,7 @@ input[type="text"] {
 }
 
 #progress-bar {
-    width: 70%;
+    width: 100%; /* Use 100% width to fill the wrapper */
     background-color: #ddd;
     border-radius: 5px;
     overflow: hidden;
@@ -103,4 +106,3 @@ input[type="text"] {
     background-color: #4caf50;
     transition: width 0.3s;
 }
-
