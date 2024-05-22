@@ -303,66 +303,48 @@ function validateDetails(details, word) {
 }
 
 function saveResponse(set) {
+    console.log('Saving response');
     let details = [];
     for (let i = 1; i <= 4; i++) {
         details.push(document.getElementById(`detail${i}`).value);
     }
 
-    if (validateDetails(details, set.word)) {
-        experiment.responses.push({
-            participantName: experiment.participantName,
-            image: set.path,
-            word: set.word,
-            detail1: details[0],
-            detail2: details[1],
-            detail3: details[2],
-            detail4: details[3],
-            condition: set.condition,
-            folder: set.folder
-        });
+    let data = {
+        participantName: experiment.participantName,
+        image: set.path,
+        word: set.word,
+        detail1: details[0],
+        detail2: details[1],
+        detail3: details[2],
+        detail4: details[3],
+        condition: set.condition,
+        folder: set.folder
+    };
 
-        const data = {
-            participantName: experiment.participantName,
-            image: set.path,
-            word: set.word,
-            detail1: details[0],
-            detail2: details[1],
-            detail3: details[2],
-            detail4: details[3],
-            condition: set.condition,
-            folder: set.folder
-        };
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
+        method: 'POST',
+        mode: 'no-cors', // Add this line
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('Data saved successfully');
+    })
+    .catch(error => {
+        console.error('Error saving data:', error);
+    });
 
-        fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(responseData => {
-            console.log('Data saved successfully:', responseData);
-        })
-        .catch(error => {
-            console.error('Error saving data:', error);
-        });
-
-        experiment.currentImage++;
-        if (experiment.currentImage >= experiment.imagesPerBlock) {
-            experiment.currentImage = 0;
-            experiment.currentBlock++;
-        }
-        showNextImage();
-    } else {
-        alert('Please provide four valid and unique details. Do not use the descriptor word.');
+    experiment.currentImage++;
+    if (experiment.currentImage >= experiment.imagesPerBlock) {
+        experiment.currentImage = 0;
+        experiment.currentBlock++;
     }
+    showNextImage();
 }
+
+
 
 
 
