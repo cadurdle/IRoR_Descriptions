@@ -303,14 +303,25 @@ function validateDetails(details, word) {
 }
 
 function saveResponse(set) {
-    console.log('Saving response');
     let details = [];
     for (let i = 1; i <= 4; i++) {
         details.push(document.getElementById(`detail${i}`).value);
     }
 
     if (validateDetails(details, set.word)) {
-        const response = {
+        experiment.responses.push({
+            participantName: experiment.participantName,
+            image: set.path,
+            word: set.word,
+            detail1: details[0],
+            detail2: details[1],
+            detail3: details[2],
+            detail4: details[3],
+            condition: set.condition,
+            folder: set.folder
+        });
+
+        const data = {
             participantName: experiment.participantName,
             image: set.path,
             word: set.word,
@@ -322,33 +333,31 @@ function saveResponse(set) {
             folder: set.folder
         };
 
-        fetch('https://script.google.com/macros/s/AKfycbyim6PM7I3jrycY_mm-8hrifGFmDTHgP-x0jCvX9lpgUexGM2ApwEwNXkUsC3uO40wtVw/exec', {
+        fetch('https://script.google.com/macros/s/AKfycbw9hhwouQhZUuZD7QJxfkIK4LNcnxYCuok8cY1-pk4bwjkh9vOXl08ca1YH36kKlG0Uug/exec', {
             method: 'POST',
-            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(response)
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            experiment.responses.push(response);
-            experiment.currentImage++;
-            if (experiment.currentImage >= experiment.imagesPerBlock) {
-                experiment.currentImage = 0;
-                experiment.currentBlock++;
-            }
-            showNextImage();
+        .then(responseData => {
+            console.log('Data saved successfully:', responseData);
         })
-        .catch((error) => {
-            console.error('Error:', error);
+        .catch(error => {
+            console.error('Error saving data:', error);
         });
+
+        experiment.currentImage++;
+        if (experiment.currentImage >= experiment.imagesPerBlock) {
+            experiment.currentImage = 0;
+            experiment.currentBlock++;
+        }
+        showNextImage();
     } else {
         alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
 }
-
 
 function endExperiment() {
     console.log('Ending experiment');
