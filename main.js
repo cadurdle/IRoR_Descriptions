@@ -322,7 +322,7 @@ function saveResponse(set) {
             folder: set.folder
         };
 
-        fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+        fetch('https://docs.google.com/spreadsheets/d/1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8/edit?usp=sharing', {
             method: 'POST',
             mode: 'cors',
             headers: {
