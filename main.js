@@ -348,9 +348,6 @@ function saveResponse(set) {
     showNextImage();
 }
 
-
-
-
 function endExperiment() {
     console.log('Ending experiment');
     showThankYouMessage();
