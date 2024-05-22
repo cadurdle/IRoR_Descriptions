@@ -308,11 +308,23 @@ function validateDetails(details, word) {
 function saveResponse(set) {
     console.log('Saving response');
     let details = [];
+    let invalidDetails = [];
+    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
+
     for (let i = 1; i <= 4; i++) {
-        details.push(document.getElementById(`detail${i}`).value.trim());
+        let detail = document.getElementById(`detail${i}`).value.trim();
+        details.push(detail);
+
+        let words = detail.split(' ');
+        words.forEach(word => {
+            if (!typo.check(word)) {
+                invalidDetails.push(word);
+            }
+        });
     }
 
-    if (!validateDetails(details, set.word)) {
+    if (invalidDetails.length > 0) {
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
         return;
     }
 
@@ -335,9 +347,8 @@ function saveResponse(set) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Data saved successfully', data);
+    .then(response => {
+        console.log('Data saved successfully');
     })
     .catch(error => {
         console.error('Error saving data:', error);
@@ -350,6 +361,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 function endExperiment() {
     console.log('Ending experiment');
