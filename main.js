@@ -278,29 +278,16 @@ function validateDetails(details, word) {
         let detailText = detail.trim();
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word) return false;
-        // Allow multiple words per detail entry
-        if (!/^[a-zA-Z\s]+$/.test(detailText)) {
-            alert(`"${detailText}" contains non-alphabetic characters. Please correct it.`);
-            return false;
-        }
-        // Check if the detail is a valid word (spell-checking with Typo.js)
-        const words = detailText.split(/\s+/);
-        for (let word of words) {
-            if (!typo.check(word)) {
-                alert(`"${word}" is not a valid word. Please check your spelling.`);
-                return false;
-            }
-        }
+        // Check if the detail contains only alphabetic characters and spaces
+        if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
     // Ensure all details are unique
-    if (detailSet.size !== details.length) {
-        alert('Please provide four unique details.');
-        return false;
-    }
+    if (detailSet.size !== details.length) return false;
     return true;
 }
+
 
 function saveResponse(set) {
     console.log('Saving response');
