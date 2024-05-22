@@ -296,6 +296,7 @@ function saveResponse(set) {
         let detail = document.getElementById(`detail${i}`).value.trim();
         details.push(detail);
         
+        // Split detail into individual words for validation
         let words = detail.split(' ');
         words.forEach(word => {
             if (!typo.check(word)) {
@@ -330,11 +331,7 @@ function saveResponse(set) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'success') {
-            console.log('Data saved successfully');
-        } else {
-            console.error('Error saving data:', data.message);
-        }
+        console.log('Data saved successfully', data);
     })
     .catch(error => {
         console.error('Error saving data:', error);
@@ -347,6 +344,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 function endExperiment() {
     console.log('Ending experiment');
