@@ -310,7 +310,8 @@ function saveResponse(set) {
     }
 
     if (validateDetails(details, set.word)) {
-        experiment.responses.push({
+        const response = {
+            participantName: experiment.participantName,
             image: set.path,
             word: set.word,
             detail1: details[0],
@@ -319,17 +320,35 @@ function saveResponse(set) {
             detail4: details[3],
             condition: set.condition,
             folder: set.folder
+        };
+
+        fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(response)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            experiment.responses.push(response);
+            experiment.currentImage++;
+            if (experiment.currentImage >= experiment.imagesPerBlock) {
+                experiment.currentImage = 0;
+                experiment.currentBlock++;
+            }
+            showNextImage();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
         });
-        experiment.currentImage++;
-        if (experiment.currentImage >= experiment.imagesPerBlock) {
-            experiment.currentImage = 0;
-            experiment.currentBlock++;
-        }
-        showNextImage();
     } else {
         alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
 }
+
 
 function endExperiment() {
     console.log('Ending experiment');
