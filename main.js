@@ -44,6 +44,7 @@ function fetchStudyData() {
 
 function preloadImages(imageSets) {
     imageSets.forEach(set => {
+        set.images.sort(); // Sort images alphabetically
         set.images.forEach(image => {
             let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
             let word = formatWord(image);
@@ -277,8 +278,8 @@ function validateDetails(details, word) {
         let detailText = detail.trim();
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word) return false;
-        // Check if the detail contains only alphabetic characters
-        if (!/^[a-zA-Z]+$/.test(detailText)) {
+        // Allow multiple words per detail entry
+        if (!/^[a-zA-Z\s]+$/.test(detailText)) {
             alert(`"${detailText}" contains non-alphabetic characters. Please correct it.`);
             return false;
         }
