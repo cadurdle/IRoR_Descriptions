@@ -253,6 +253,8 @@ function displayImage(path, word) {
     createInputFields(4, { path: path, word: word });
 }
 
+
+
 function validateDetails(details, word) {
     console.log('Validating details');
     if (details.length !== 4) return false;
@@ -264,7 +266,7 @@ function validateDetails(details, word) {
         if (!detailText || detailText.toUpperCase() === word) return false;
         // Check if the detail contains only alphabetic characters
         if (!/^[a-zA-Z]+$/.test(detailText)) return false;
-        // Check if the detail is a valid word (basic spell-checking)
+        // Check if the detail is a valid word (spell-checking with Typo.js)
         if (!typo.check(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
@@ -273,6 +275,7 @@ function validateDetails(details, word) {
     if (detailSet.size !== details.length) return false;
     return true;
 }
+
 
 function saveResponse(set) {
     console.log('Saving response');
