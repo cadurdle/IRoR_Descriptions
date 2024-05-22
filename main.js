@@ -121,8 +121,11 @@ function showInstructionPages() {
 
 function startTrials() {
     console.log('Starting trials');
+    document.getElementById('progress-bar-container').style.display = 'flex';
     showNextImage();
 }
+
+
 
 function showNextImage() {
     console.log('Showing next image');
