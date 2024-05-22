@@ -153,7 +153,6 @@ function showNextImage() {
      // Save data after every block
     if (experiment.currentImage === 0 && experiment.currentBlock > 0) {
         saveResponsesToFile();
-    }
 }
 
 function createInputFields(number, set) {
