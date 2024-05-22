@@ -328,8 +328,13 @@ function saveResponse(set) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => {
-        console.log('Data saved successfully');
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Data saved successfully');
+        } else {
+            console.error('Error saving data:', data.message);
+        }
     })
     .catch(error => {
         console.error('Error saving data:', error);
@@ -342,6 +347,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 
 function endExperiment() {
