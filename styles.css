@@ -74,8 +74,8 @@ input[type="text"] {
     position: fixed;
     bottom: 0;
     width: 100%;
-    background-color: #f3f3f3;
-    border-top: 1px solid #ccc;
+    background-color: black;
+    border-top: 1px solid blue;
     padding: 5px 0;
     display: flex;
     justify-content: center; /* Center the progress bar horizontally */
@@ -98,7 +98,7 @@ input[type="text"] {
 #progress-bar {
     width: 100%; /* Use 100% width to fill the wrapper */
     background-color: black; /* Set the inside color to black */
-    border: 2px solid #007bff; /* Set the outline color to blue */
+    border: 2px solid blue; /* Set the outline color to blue */
     border-radius: 5px;
     overflow: hidden;
     position: relative;
@@ -107,7 +107,7 @@ input[type="text"] {
 #progress-bar-fill {
     width: 0;
     height: 20px;
-    background-color: #007bff; /* Change the color of the progress bar fill to blue */
+    background-color: blue; /* Change the color of the progress bar fill to blue */
     transition: width 0.3s;
     position: absolute;
     top: 0;
