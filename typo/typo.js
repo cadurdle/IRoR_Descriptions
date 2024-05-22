@@ -245,7 +245,7 @@ Typo.prototype = {
 					
 					req.onerror = function() {
 						reject(req.statusText);
-					}
+					};
 				});
 			}
 		
@@ -446,7 +446,58 @@ Typo.prototype = {
 			var parts = line.split("/", 2);
 			
 			var word = parts[0];
-			addWord(word.trim(), this.parseRuleCodes(parts[1]));
+
+			// Now for each affix rule, generate that form of the word.
+			if (parts.length > 1) {
+				var ruleCodesArray = this.parseRuleCodes(parts[1]);
+				
+				// Save the ruleCodes for compound word situations.
+				if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) == -1) {
+					addWord(word, ruleCodesArray);
+				}
+				
+				for (var j = 0, _jlen = ruleCodesArray.length; j < _jlen; j++) {
+					var code = ruleCodesArray[j];
+					
+					var rule = this.rules[code];
+					
+					if (rule) {
+						var newWords = this._applyRule(word, rule);
+						
+						for (var ii = 0, _iilen = newWords.length; ii < _iilen; ii++) {
+							var newWord = newWords[ii];
+							
+							addWord(newWord, []);
+							
+							if (rule.combineable) {
+								for (var k = j + 1; k < _jlen; k++) {
+									var combineCode = ruleCodesArray[k];
+									
+									var combineRule = this.rules[combineCode];
+									
+									if (combineRule) {
+										if (combineRule.combineable && (rule.type != combineRule.type)) {
+											var otherNewWords = this._applyRule(newWord, combineRule);
+											
+											for (var iii = 0, _iiilen = otherNewWords.length; iii < _iiilen; iii++) {
+												var otherNewWord = otherNewWords[iii];
+												addWord(otherNewWord, []);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					if (code in this.compoundRuleCodes) {
+						this.compoundRuleCodes[code].push(word);
+					}
+				}
+			}
+			else {
+				addWord(word.trim(), []);
+			}
 		}
 		
 		return dictionaryTable;
@@ -714,7 +765,186 @@ Typo.prototype = {
 
 		if (this.memoized.hasOwnProperty(word)) {
 			var memoizedLimit = this.memoized[word]['limit'];
+			if (limit <= memoizedLimit) {
+				return this.memoized[word][limit];
+			}
 		}
+		
+		var self = this;
+		
+		function editDistance(a, b) {
+			if (a.length === 0) return b.length; 
+			if (b.length === 0) return a.length; 
+		
+			var matrix = [];
+		
+			// increment along the first column of each row
+			var i;
+			for (i = 0; i <= b.length; i++) {
+				matrix[i] = [i];
+			}
+		
+			// increment each column in the first row
+			var j;
+			for (j = 0; j <= a.length; j++) {
+				matrix[0][j] = j;
+			}
+		
+			// Fill in the rest of the matrix
+			for (i = 1; i <= b.length; i++) {
+				for (j = 1; j <= a.length; j++) {
+					if (b.charAt(i-1) === a.charAt(j-1)) {
+						matrix[i][j] = matrix[i-1][j-1];
+					} else {
+						matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+							Math.min(matrix[i][j-1] + 1, // insertion
+							matrix[i-1][j] + 1)); // deletion
+					}
+				}
+			}
+		
+			return matrix[b.length][a.length];
+		}
+		
+		/**
+		 * Comparator function for suggestions.
+		 */
+		 
+		function compareScores(a, b) {
+			if (a.score < b.score) {
+				return -1;
+			}
+			else if (a.score > b.score) {
+				return 1;
+			}
+			else {
+				if (a.word < b.word) {
+					return -1;
+				}
+				else if (a.word > b.word) {
+					return 1;
+				}
+			}
+			
+			return 0;
+		}
+		
+		// Check the replacement table.
+		var i, _len, replacement;
+		var replacements = this.replacementTable;
+		
+		var searchTerm = word;
+		
+		for (i = 0, _len = replacements.length; i < _len; i++) {
+			replacement = replacements[i];
+			
+			if (searchTerm.indexOf(replacement[0]) !== -1) {
+				var correctedWord = searchTerm.replace(replacement[0], replacement[1]);
+				
+				if (this.check(correctedWord)) {
+					return [ correctedWord ];
+				}
+			}
+		}
+		
+		if (this.check(word)) {
+			return [];
+		}
+		
+		var currentLevel = [ word ];
+		var suggestions = [];
+		var seen = new Set();
+		
+		seen.add(word);
+		
+		var maxEditDistance = 2;
+		
+		// Don't suggest words that differ in length by more than maxEditDistance
+		var maxLength = word.length + maxEditDistance;
+		var minLength = word.length - maxEditDistance;
+		
+		// Iterate through all the levels of the levenshtein distance.
+		for (var currentEditDistance = 0; currentEditDistance < maxEditDistance; currentEditDistance++) {
+			var newCurrentLevel = [];
+			
+			// Save any suggestions from the current level.
+			for (i = 0, _len = currentLevel.length; i < _len; i++) {
+				var currentWord = currentLevel[i];
+				
+				var edits = self.edits(currentWord);
+				
+				edits.forEach(function(edit) {
+					if (!seen.has(edit)) {
+						seen.add(edit);
+						
+						if (edit.length <= maxLength && edit.length >= minLength) {
+							if (self.check(edit)) {
+								var score = editDistance(word, edit);
+								
+								if (score <= maxEditDistance) {
+									suggestions.push({ word: edit, score: score });
+								}
+							}
+							
+							newCurrentLevel.push(edit);
+						}
+					}
+				});
+			}
+			
+			currentLevel = newCurrentLevel;
+		}
+		
+		suggestions.sort(compareScores);
+		
+		var results = suggestions.map(function(suggestion) {
+			return suggestion.word;
+		});
+		
+		// Memoize the result.
+		this.memoized[word] = this.memoized[word] || {};
+		this.memoized[word][limit] = results.slice(0, limit);
+		this.memoized[word]['limit'] = limit;
+		
+		return results.slice(0, limit);
+	},
+	
+	/**
+	 * Returns a list of all the possible one-edit words for a given word.
+	 *
+	 * @param {String} word The word to split.
+	 * @returns {String[]} The array of words.
+	 */
+	
+	edits : function (word) {
+		var i, _len;
+		var results = [];
+		
+		// Delete each character.
+		for (i = 0, _len = word.length; i < _len; i++) {
+			results.push(word.substring(0, i) + word.substring(i + 1));
+		}
+		
+		// Transpose each adjacent character.
+		for (i = 0, _len = word.length - 1; i < _len; i++) {
+			results.push(word.substring(0, i) + word.charAt(i + 1) + word.charAt(i) + word.substring(i + 2));
+		}
+		
+		// Replace each character with each letter in the alphabet.
+		for (i = 0, _len = word.length; i < _len; i++) {
+			for (var j = 0, _jlen = this.alphabet.length; j < _jlen; j++) {
+				results.push(word.substring(0, i) + this.alphabet[j] + word.substring(i + 1));
+			}
+		}
+		
+		// Add each letter in the alphabet in each position.
+		for (i = 0, _len = word.length + 1; i < _len; i++) {
+			for (var k = 0, _klen = this.alphabet.length; k < _klen; k++) {
+				results.push(word.substring(0, i) + this.alphabet[k] + word.substring(i));
+			}
+		}
+		
+		return results;
 	}
 };
-
+})();
