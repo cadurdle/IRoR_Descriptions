@@ -78,7 +78,8 @@ input[type="text"] {
     border-top: 1px solid #ccc;
     padding: 5px 0;
     display: flex;
-    justify-content: center;
+    justify-content: center; /* Center the progress bar horizontally */
+    align-items: center; /* Center the progress bar vertically */
 }
 
 #progress-bar-wrapper {
@@ -106,3 +107,4 @@ input[type="text"] {
     background-color: #4caf50;
     transition: width 0.3s;
 }
+
