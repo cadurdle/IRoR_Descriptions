@@ -72,21 +72,23 @@ input[type="text"] {
 
 #progress-bar-container {
     position: fixed;
-    bottom: 0;
-    width: 100%;
+    bottom: 20px; /* Adjust the distance from the bottom */
+    width: 50%; /* Set the width to 50% of the screen */
+    left: 25%; /* Center the progress bar horizontally */
     background-color: black;
     border-top: 1px solid blue;
     padding: 5px 0;
     display: flex;
     justify-content: center; /* Center the progress bar horizontally */
     align-items: center; /* Center the progress bar vertically */
+    z-index: 1000; /* Ensure it stays on top of other content */
 }
 
 #progress-bar-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 70%; /* Set the width you want for the progress bar wrapper */
+    width: 100%; /* Use 100% width to fill the wrapper */
 }
 
 #progress-label {
