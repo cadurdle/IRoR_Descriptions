@@ -32,10 +32,10 @@ function fetchImages(condition, setNumber) {
 function preloadImages() {
     let promises = [];
     for (let i = 1; i <= experiment.congruentSets; i++) {
-        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
+        promises.push(loadImagesFromPath('congruent', `studyset${i}`));
     }
     for (let i = 1; i <= experiment.incongruentSets; i++) {
-        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
+        promises.push(loadImagesFromPath('incongruent', `studyset${i}`));
     }
     return Promise.all(promises);
 }
@@ -45,13 +45,13 @@ function loadImagesFromPath(condition, set) {
         images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `/IRoR_Descriptions/images/${condition}/${set}/${image}`,
+                path: `/images/${condition}/${set}/${image}`,
                 word: word,
                 condition: condition,
                 folder: set
             });
         });
-        console.log(`Loaded images from ${condition}/${set}`);
+        console.log(`Loaded images from ${condition}_resources/${set}`);
     });
 }
 
