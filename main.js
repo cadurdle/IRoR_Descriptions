@@ -284,9 +284,12 @@ function validateDetails(details, word) {
             return false;
         }
         // Check if the detail is a valid word (spell-checking with Typo.js)
-        if (!typo.check(detailText)) {
-            alert(`"${detailText}" is not a valid word. Please check your spelling.`);
-            return false;
+        const words = detailText.split(/\s+/);
+        for (let word of words) {
+            if (!typo.check(word)) {
+                alert(`"${word}" is not a valid word. Please check your spelling.`);
+                return false;
+            }
         }
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
