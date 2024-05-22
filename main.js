@@ -277,14 +277,7 @@ function validateDetails(details, word) {
     for (let detail of details) {
         let detailText = detail.trim();
         // Check if the detail is empty or is the same as the descriptor word
-        if (!detailText || detailText.toUpperCase() === word) return false;
-        // Check if the detail contains non-alphabetic characters
-        if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
-        // Check if the detail is a valid word (basic spell-checking)
-        if (!typo.check(detailText)) {
-            alert(`"${detailText}" is not a valid word. Please check your spelling.`);
-            return false;
-        }
+        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
