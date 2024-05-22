@@ -274,39 +274,45 @@ function validateDetails(details, word) {
     if (details.length !== 4) return false;
 
     let detailSet = new Set();
-    for (let detail of details) {
-        let detailText = detail.trim();
-        // Check if the detail is empty or is the same as the descriptor word
-        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
-        // Add detail to the set
-        detailSet.add(detailText.toUpperCase());
-    }
-    // Ensure all details are unique
-    if (detailSet.size !== details.length) return false;
-    return true;
-}
-
-function saveResponse(set) {
-    console.log('Saving response');
-    let details = [];
     let invalidDetails = [];
     let typo = new Typo('en_US');
 
-    for (let i = 1; i <= 4; i++) {
-        let detail = document.getElementById(`detail${i}`).value.trim();
-        details.push(detail);
-        
+    for (let detail of details) {
+        let detailText = detail.trim();
+        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
+
         // Split detail into individual words for validation
-        let words = detail.split(' ');
+        let words = detailText.split(' ');
         words.forEach(word => {
             if (!typo.check(word)) {
                 invalidDetails.push(word);
             }
         });
+
+        detailSet.add(detailText.toUpperCase());
     }
 
+    // Ensure all details are unique
+    if (detailSet.size !== details.length) return false;
+
+    // Check if there are any invalid details
     if (invalidDetails.length > 0) {
         alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        return false;
+    }
+
+    return true;
+}
+
+
+function saveResponse(set) {
+    console.log('Saving response');
+    let details = [];
+    for (let i = 1; i <= 4; i++) {
+        details.push(document.getElementById(`detail${i}`).value.trim());
+    }
+
+    if (!validateDetails(details, set.word)) {
         return;
     }
 
@@ -344,7 +350,6 @@ function saveResponse(set) {
     }
     showNextImage();
 }
-
 
 function endExperiment() {
     console.log('Ending experiment');
