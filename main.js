@@ -359,6 +359,7 @@ function saveResponse(set) {
     }
 }
 
+
 function endExperiment() {
     console.log('Ending experiment');
     showThankYouMessage();
