@@ -75,7 +75,7 @@ input[type="text"] {
     bottom: 40px; /* Move the progress bar up */
     width: 60%; /* Set the width to 60% of the screen */
     left: 20%; /* Center the progress bar horizontally */
-    background-color: black;
+    background-color: transparent; /* Ensure the background is transparent */
     padding: 5px 0;
     display: flex;
     justify-content: center; /* Center the progress bar horizontally */
