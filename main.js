@@ -111,6 +111,7 @@ function showInstructionPages() {
         } else {
             instructionsDiv.innerHTML = '';
             document.getElementById('experiment').style.display = 'flex';
+            document.getElementById('progress-bar-container').style.display = 'block'; // Show the progress bar
             startTrials();
         }
     }
@@ -270,9 +271,9 @@ function validateDetails(details, word) {
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word) return false;
         // Check if the detail contains only alphabetic characters
-        if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
-        // Check if the detail is a valid word (spell check)
-        if (dictionary && !dictionary.check(detailText)) return false;
+        if (!/^[a-zA-Z]+$/.test(detailText)) return false;
+        // Check if the detail is a valid word (basic spell-checking)
+        if (!typo.check(detailText)) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
@@ -358,11 +359,3 @@ function saveResponsesToFile() {
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
     saveToFile(filename, data);
 }
-
-// Initialize Typo.js for spell checking
-let dictionary;
-new Typo("en_US", "/IRoR_Descriptions/typo/en_US.aff", "/IRoR_Descriptions/typo/en_US.dic", {
-    loadedCallback: function() {
-        dictionary = this;
-    }
-});
