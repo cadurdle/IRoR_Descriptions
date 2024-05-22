@@ -10,6 +10,21 @@ let experiment = {
     participantName: ''
 };
 
+let typo;
+
+window.onload = function() {
+    typo = new Typo("en_US", false, false, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries" });
+    fetchStudyData()
+        .then(imageSets => preloadImages(imageSets))
+        .then(() => {
+            console.log('Images preloaded');
+            showInstructions();
+        })
+        .catch(error => {
+            console.error('Error preloading images:', error);
+        });
+};
+
 function fetchStudyData() {
     return fetch('/IRoR_Descriptions/study.json')
         .then(response => {
@@ -166,7 +181,7 @@ function createInputFields(number, set) {
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
     wordElement.style.marginBottom = '15px';
-	
+    
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -192,7 +207,7 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-		let input = document.createElement('input');
+        let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
@@ -253,8 +268,6 @@ function displayImage(path, word) {
     createInputFields(4, { path: path, word: word });
 }
 
-
-
 function validateDetails(details, word) {
     console.log('Validating details');
     if (details.length !== 4) return false;
@@ -265,17 +278,25 @@ function validateDetails(details, word) {
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word) return false;
         // Check if the detail contains only alphabetic characters
-        if (!/^[a-zA-Z]+$/.test(detailText)) return false;
+        if (!/^[a-zA-Z]+$/.test(detailText)) {
+            alert(`"${detailText}" contains non-alphabetic characters. Please correct it.`);
+            return false;
+        }
         // Check if the detail is a valid word (spell-checking with Typo.js)
-        if (!typo.check(detailText)) return false;
+        if (!typo.check(detailText)) {
+            alert(`"${detailText}" is not a valid word. Please check your spelling.`);
+            return false;
+        }
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
     // Ensure all details are unique
-    if (detailSet.size !== details.length) return false;
+    if (detailSet.size !== details.length) {
+        alert('Please provide four unique details.');
+        return false;
+    }
     return true;
 }
-
 
 function saveResponse(set) {
     console.log('Saving response');
@@ -354,13 +375,3 @@ function saveResponsesToFile() {
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
     saveToFile(filename, data);
 }
-
-fetchStudyData()
-    .then(imageSets => preloadImages(imageSets))
-    .then(() => {
-        console.log('Images preloaded');
-        showInstructions();
-    })
-    .catch(error => {
-        console.error('Error preloading images:', error);
-    });
