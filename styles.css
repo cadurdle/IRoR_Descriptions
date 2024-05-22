@@ -72,34 +72,35 @@ input[type="text"] {
 
 #progress-bar-container {
     position: fixed;
-    bottom: 50px;
+    bottom: 0;
     width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background-color: #f3f3f3;
+    border-top: 1px solid #ccc;
+    padding: 5px 0;
 }
 
 #progress-bar-wrapper {
     display: flex;
     align-items: center;
-    width: 40%;
+    justify-content: center;
 }
 
 #progress-label {
-    color: white;
     margin-right: 10px;
+    font-size: 14px;
 }
 
 #progress-bar {
-    flex-grow: 1;
-    height: 20px;
-    background-color: white;
-    border: 2px solid blue;
-    position: relative;
+    width: 70%;
+    background-color: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
 }
 
 #progress-bar-fill {
-    height: 100%;
-    background-color: blue;
     width: 0;
+    height: 20px;
+    background-color: #4caf50;
+    transition: width 0.3s;
 }
+
