@@ -305,8 +305,24 @@ function validateDetails(details, word) {
 function saveResponse(set) {
     console.log('Saving response');
     let details = [];
+    let invalidDetails = [];
+    let typo = new Typo('en_US');
+
     for (let i = 1; i <= 4; i++) {
-        details.push(document.getElementById(`detail${i}`).value);
+        let detail = document.getElementById(`detail${i}`).value.trim();
+        details.push(detail);
+        
+        let words = detail.split(' ');
+        words.forEach(word => {
+            if (!typo.check(word)) {
+                invalidDetails.push(word);
+            }
+        });
+    }
+
+    if (invalidDetails.length > 0) {
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        return;
     }
 
     let data = {
@@ -323,7 +339,6 @@ function saveResponse(set) {
 
     fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
         method: 'POST',
-        mode: 'no-cors', // Add this line
         headers: {
             'Content-Type': 'application/json'
         },
@@ -343,9 +358,6 @@ function saveResponse(set) {
     }
     showNextImage();
 }
-
-
-
 
 
 function endExperiment() {
