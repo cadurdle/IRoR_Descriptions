@@ -446,7 +446,58 @@ Typo.prototype = {
 			var parts = line.split("/", 2);
 			
 			var word = parts[0];
-			addWord(word.trim(), this.parseRuleCodes(parts[1]));
+
+			// Now for each affix rule, generate that form of the word.
+			if (parts.length > 1) {
+				var ruleCodesArray = this.parseRuleCodes(parts[1]);
+				
+				// Save the ruleCodes for compound word situations.
+				if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) == -1) {
+					addWord(word, ruleCodesArray);
+				}
+				
+				for (var j = 0, _jlen = ruleCodesArray.length; j < _jlen; j++) {
+					var code = ruleCodesArray[j];
+					
+					var rule = this.rules[code];
+					
+					if (rule) {
+						var newWords = this._applyRule(word, rule);
+						
+						for (var ii = 0, _iilen = newWords.length; ii < _iilen; ii++) {
+							var newWord = newWords[ii];
+							
+							addWord(newWord, []);
+							
+							if (rule.combineable) {
+								for (var k = j + 1; k < _jlen; k++) {
+									var combineCode = ruleCodesArray[k];
+									
+									var combineRule = this.rules[combineCode];
+									
+									if (combineRule) {
+										if (combineRule.combineable && (rule.type != combineRule.type)) {
+											var otherNewWords = this._applyRule(newWord, combineRule);
+											
+											for (var iii = 0, _iiilen = otherNewWords.length; iii < _iiilen; iii++) {
+												var otherNewWord = otherNewWords[iii];
+												addWord(otherNewWord, []);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					if (code in this.compoundRuleCodes) {
+						this.compoundRuleCodes[code].push(word);
+					}
+				}
+			}
+			else {
+				addWord(word.trim(), []);
+			}
 		}
 		
 		return dictionaryTable;
@@ -714,7 +765,265 @@ Typo.prototype = {
 
 		if (this.memoized.hasOwnProperty(word)) {
 			var memoizedLimit = this.memoized[word]['limit'];
+
+			// Only return the cached list if it's big enough or if there weren't enough suggestions
+			// to fill a smaller limit.
+			if (limit <= memoizedLimit || this.memoized[word]['suggestions'].length < memoizedLimit) {
+				return this.memoized[word]['suggestions'].slice(0, limit);
+			}
 		}
+		
+		if (this.check(word)) return [];
+		
+		// Check the replacement table.
+		for (var i = 0, _len = this.replacementTable.length; i < _len; i++) {
+			var replacementEntry = this.replacementTable[i];
+			
+			if (word.indexOf(replacementEntry[0]) !== -1) {
+				var correctedWord = word.replace(replacementEntry[0], replacementEntry[1]);
+				
+				if (this.check(correctedWord)) {
+					return [ correctedWord ];
+				}
+			}
+		}
+		
+		if (!this.alphabet) {
+			// Use the English alphabet as the default. Problematic, but backwards-compatible.
+			this.alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			
+			// Any characters defined in the affix file as substitutions can go in the alphabet too.
+			// Note that dictionaries do not include the entire alphabet in the TRY flag when it's there.
+			// For example, Q is not in the default English TRY list; that's why having the default
+			// alphabet above is useful.
+			if ( 'TRY' in this.flags ) {
+				this.alphabet += this.flags['TRY'];
+			}
+			
+			// Plus any additional characters specifically defined as being allowed in words.
+			if ( 'WORDCHARS' in this.flags ) {
+				this.alphabet += this.flags['WORDCHARS'];
+			}
+			
+			// Remove any duplicates.
+			var alphaArray = this.alphabet.split("");
+			alphaArray.sort();
+
+			var alphaHash = {};
+			for ( var i = 0; i < alphaArray.length; i++ ) {
+				alphaHash[ alphaArray[i] ] = true;
+			}
+			
+			this.alphabet = '';
+			
+			for ( var i in alphaHash ) {
+				this.alphabet += i;
+			}
+		}
+		
+		var self = this;
+
+		/**
+		 * Returns a hash keyed by all of the strings that can be made by making a single edit to the word (or words in) `words`
+		 * The value of each entry is the number of unique ways that the resulting word can be made.
+		 *
+		 * @arg mixed words Either a hash keyed by words or a string word to operate on.
+		 * @arg bool known_only Whether this function should ignore strings that are not in the dictionary.
+		 */
+		function edits1(words, known_only) {
+			var rv = {};
+			
+			var i, j, _iilen, _len, _jlen, _edit;
+
+			var alphabetLength = self.alphabet.length;
+			
+			if (typeof words == 'string') {
+				var word = words;
+				words = {};
+				words[word] = true;
+			}
+
+			for (var word in words) {
+				for (i = 0, _len = word.length + 1; i < _len; i++) {
+					var s = [ word.substring(0, i), word.substring(i) ];
+				
+					// Remove a letter.
+					if (s[1]) {
+						_edit = s[0] + s[1].substring(1);
+
+						if (!known_only || self.check(_edit)) {
+							if (!(_edit in rv)) {
+								rv[_edit] = 1;
+							}
+							else {
+								rv[_edit] += 1;
+							}
+						}
+					}
+					
+					// Transpose letters
+					// Eliminate transpositions of identical letters
+					if (s[1].length > 1 && s[1][1] !== s[1][0]) {
+						_edit = s[0] + s[1][1] + s[1][0] + s[1].substring(2);
+
+						if (!known_only || self.check(_edit)) {
+							if (!(_edit in rv)) {
+								rv[_edit] = 1;
+							}
+							else {
+								rv[_edit] += 1;
+							}
+						}
+					}
+
+					if (s[1]) {
+						// Replace a letter with another letter.
+
+						var lettercase = (s[1].substring(0,1).toUpperCase() === s[1].substring(0,1)) ? 'uppercase' : 'lowercase';
+
+						for (j = 0; j < alphabetLength; j++) {
+							var replacementLetter = self.alphabet[j];
+
+							// Set the case of the replacement letter to the same as the letter being replaced.
+							if ( 'uppercase' === lettercase ) {
+								replacementLetter = replacementLetter.toUpperCase();
+							}
+
+							// Eliminate replacement of a letter by itself
+							if (replacementLetter != s[1].substring(0,1)){
+								_edit = s[0] + replacementLetter + s[1].substring(1);
+
+								if (!known_only || self.check(_edit)) {
+									if (!(_edit in rv)) {
+										rv[_edit] = 1;
+									}
+									else {
+										rv[_edit] += 1;
+									}
+								}
+							}
+						}
+					}
+
+					if (s[1]) {
+						// Add a letter between each letter.
+						for (j = 0; j < alphabetLength; j++) {
+							// If the letters on each side are capitalized, capitalize the replacement.
+							var lettercase = (s[0].substring(-1).toUpperCase() === s[0].substring(-1) && s[1].substring(0,1).toUpperCase() === s[1].substring(0,1)) ? 'uppercase' : 'lowercase';
+
+							var replacementLetter = self.alphabet[j];
+
+							if ( 'uppercase' === lettercase ) {
+								replacementLetter = replacementLetter.toUpperCase();
+							}
+
+							_edit = s[0] + replacementLetter + s[1];
+
+							if (!known_only || self.check(_edit)) {
+								if (!(_edit in rv)) {
+									rv[_edit] = 1;
+								}
+								else {
+									rv[_edit] += 1;
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			return rv;
+		}
+
+		function correct(word) {
+			// Get the edit-distance-1 and edit-distance-2 forms of this word.
+			var ed1 = edits1(word);
+			var ed2 = edits1(ed1, true);
+			
+			// Sort the edits based on how many different ways they were created.
+			var weighted_corrections = ed2;
+			
+			for (var ed1word in ed1) {
+				if (!self.check(ed1word)) {
+					continue;
+				}
+
+				if (ed1word in weighted_corrections) {
+					weighted_corrections[ed1word] += ed1[ed1word];
+				}
+				else {
+					weighted_corrections[ed1word] = ed1[ed1word];
+				}
+			}
+			
+			var i, _len;
+
+			var sorted_corrections = [];
+			
+			for (i in weighted_corrections) {
+				if (weighted_corrections.hasOwnProperty(i)) {
+					sorted_corrections.push([ i, weighted_corrections[i] ]);
+				}
+			}
+
+			function sorter(a, b) {
+				var a_val = a[1];
+				var b_val = b[1];
+				if (a_val < b_val) {
+					return -1;
+				} else if (a_val > b_val) {
+					return 1;
+				}
+				// @todo If a and b are equally weighted, add our own weight based on something like the key locations on this language's default keyboard.
+				return b[0].localeCompare(a[0]);
+			}
+			
+			sorted_corrections.sort(sorter).reverse();
+
+			var rv = [];
+
+			var capitalization_scheme = "lowercase";
+			
+			if (word.toUpperCase() === word) {
+				capitalization_scheme = "uppercase";
+			}
+			else if (word.substr(0, 1).toUpperCase() + word.substr(1).toLowerCase() === word) {
+				capitalization_scheme = "capitalized";
+			}
+			
+			var working_limit = limit;
+
+			for (i = 0; i < Math.min(working_limit, sorted_corrections.length); i++) {
+				if ("uppercase" === capitalization_scheme) {
+					sorted_corrections[i][0] = sorted_corrections[i][0].toUpperCase();
+				}
+				else if ("capitalized" === capitalization_scheme) {
+					sorted_corrections[i][0] = sorted_corrections[i][0].substr(0, 1).toUpperCase() + sorted_corrections[i][0].substr(1);
+				}
+				
+				if (!self.hasFlag(sorted_corrections[i][0], "NOSUGGEST") && rv.indexOf(sorted_corrections[i][0]) == -1) {
+					rv.push(sorted_corrections[i][0]);
+				}
+				else {
+					// If one of the corrections is not eligible as a suggestion , make sure we still return the right number of suggestions.
+					working_limit++;
+				}
+			}
+
+			return rv;
+		}
+		
+		this.memoized[word] = {
+			'suggestions': correct(word),
+			'limit': limit
+		};
+
+		return this.memoized[word]['suggestions'];
 	}
 };
+})();
 
+// Support for use as a node.js module.
+if (typeof module !== 'undefined') {
+	module.exports = Typo;
+}
