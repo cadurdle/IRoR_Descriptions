@@ -277,9 +277,7 @@ function validateDetails(details, word) {
     for (let detail of details) {
         let detailText = detail.trim();
         // Check if the detail is empty or is the same as the descriptor word
-        if (!detailText || detailText.toUpperCase() === word) return false;
-        // Check if the detail contains only alphabetic characters and spaces
-        if (!/^[a-zA-Z\s]+$/.test(detailText)) return false;
+        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
         // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
@@ -287,6 +285,7 @@ function validateDetails(details, word) {
     if (detailSet.size !== details.length) return false;
     return true;
 }
+
 
 
 function saveResponse(set) {
