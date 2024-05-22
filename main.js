@@ -10,45 +10,49 @@ let experiment = {
     participantName: ''
 };
 
-// Fetch and process study.json
-fetch('study.json')
-    .then(response => response.json())
-    .then(data => {
-        console.log('Fetched study.json:', data);
-        // Load image sets from study.json
-        data.imageSets.forEach(imageSet => {
-            let sortedImages = imageSet.images.sort();
-            sortedImages.forEach(image => {
-                experiment.imageSets.push({
-                    path: `/IRoR_Descriptions/images/${imageSet.condition}/${imageSet.setNumber}/${image}`,
-                    word: formatWord(image),
-                    condition: imageSet.condition,
-                    folder: imageSet.setNumber
-                });
-            });
+function fetchImages(condition, setNumber) {
+    console.log(`Fetching images from /IRoR_Descriptions/images/${condition}/${setNumber}`);
+    return fetch(`/IRoR_Descriptions/images/${condition}/${setNumber}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(images => {
+            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
+            return images;
+        })
+        .catch(error => {
+            console.error('Error fetching images:', error);
+            return [];
         });
-
-        // Preload images after fetching study.json
-        return preloadImages();
-    })
-    .then(() => {
-        console.log('Images preloaded');
-        showInstructions();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+}
 
 function preloadImages() {
-    let promises = experiment.imageSets.map(imageSet =>
-        new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = imageSet.path;
-            img.onload = resolve;
-            img.onerror = reject;
-        })
-    );
+    let promises = [];
+    for (let i = 1; i <= experiment.congruentSets; i++) {
+        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
+    }
+    for (let i = 1; i <= experiment.incongruentSets; i++) {
+        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
+    }
     return Promise.all(promises);
+}
+
+function loadImagesFromPath(condition, set) {
+    return fetchImages(condition, set).then(images => {
+        images.forEach(image => {
+            let word = formatWord(image);
+            experiment.imageSets.push({
+                path: `/IRoR_Descriptions/images/${condition}/${set}/${image}`,
+                word: word,
+                condition: condition,
+                folder: set
+            });
+        });
+        console.log(`Loaded images from ${condition}/${set}`);
+    });
 }
 
 function formatWord(filename) {
@@ -72,7 +76,7 @@ function showInstructions() {
     instructionsDiv.style.flexDirection = 'column';
     instructionsDiv.style.justifyContent = 'center';
     instructionsDiv.style.alignItems = 'center';
-    instructionsDiv.style.height = '100vh'; // Ensure instructions div takes full height
+    instructionsDiv.style.height = '100vh';
 
     const startButton = document.getElementById('startButton');
     startButton.onclick = () => {
@@ -111,7 +115,6 @@ function showInstructionPages() {
         } else {
             instructionsDiv.innerHTML = '';
             document.getElementById('experiment').style.display = 'flex';
-            document.getElementById('progress-bar-container').style.display = 'block'; // Show the progress bar
             startTrials();
         }
     }
@@ -124,8 +127,6 @@ function startTrials() {
     document.getElementById('progress-bar-container').style.display = 'flex';
     showNextImage();
 }
-
-
 
 function showNextImage() {
     console.log('Showing next image');
@@ -143,7 +144,7 @@ function showNextImage() {
     console.log(`Displaying image from path: ${set.path}`);
     displayImage(set.path, set.word);
     createInputFields(4, set);
-    updateProgressBar();  // Update the progress bar
+    updateProgressBar();
 }
 
 function createInputFields(number, set) {
@@ -177,7 +178,7 @@ function createInputFields(number, set) {
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
     wordElement.style.marginBottom = '15px';
-    
+
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -207,11 +208,11 @@ function createInputFields(number, set) {
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
-        input.autocomplete = `off`;
+        input.autocomplete = 'off';
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-        
+
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -345,6 +346,13 @@ function saveToFile(filename, data) {
     a.download = filename;
     a.click();
 }
+
+preloadImages().then(() => {
+    console.log('Images preloaded');
+    showInstructions();
+}).catch(error => {
+    console.error('Error preloading images:', error);
+});
 
 function updateProgressBar() {
     const progressBarFill = document.getElementById('progress-bar-fill');
