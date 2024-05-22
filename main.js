@@ -333,7 +333,7 @@ function saveResponse(set) {
             folder: set.folder
         };
 
-        fetch('https://script.google.com/macros/s/AKfycbxSjJ_v2egJ_yxuRnQB60T0Ika3ThIMf1qgLHNB6gef3prhZPvlMQ9eL0kAh89VMVEHIQ/exec', {
+        fetch('https://script.google.com/macros/s/AKfycbw9hhwouQhZUuZD7QJxfkIK4LNcnxYCuok8cY1-pk4bwjkh9vOXl08ca1YH36kKlG0Uug/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -363,6 +363,7 @@ function saveResponse(set) {
         alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
 }
+
 
 
 function endExperiment() {
