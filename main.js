@@ -10,49 +10,37 @@ let experiment = {
     participantName: ''
 };
 
-function fetchImages(condition, setNumber) {
-    console.log(`Fetching images from /IRoR_Descriptions/images/${condition}/${setNumber}`);
-    return fetch(`/IRoR_Descriptions/images/${condition}/${setNumber}`)
+function fetchStudyData() {
+    return fetch('/IRoR_Descriptions/study.json')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
-        .then(images => {
-            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
-            return images;
+        .then(data => {
+            return data.imageSets;
         })
         .catch(error => {
-            console.error('Error fetching images:', error);
+            console.error('Error fetching study data:', error);
             return [];
         });
 }
 
-function preloadImages() {
-    let promises = [];
-    for (let i = 1; i <= experiment.congruentSets; i++) {
-        promises.push(loadImagesFromPath('congruent_resources', `studyset${i}`));
-    }
-    for (let i = 1; i <= experiment.incongruentSets; i++) {
-        promises.push(loadImagesFromPath('incongruent_resources', `studyset${i}`));
-    }
-    return Promise.all(promises);
-}
-
-function loadImagesFromPath(condition, set) {
-    return fetchImages(condition, set).then(images => {
-        images.forEach(image => {
+function preloadImages(imageSets) {
+    imageSets.forEach(set => {
+        set.images.forEach(image => {
+            let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: `/IRoR_Descriptions/images/${condition}/${set}/${image}`,
+                path: path,
                 word: word,
-                condition: condition,
-                folder: set
+                condition: set.condition,
+                folder: set.setNumber
             });
         });
-        console.log(`Loaded images from ${condition}/${set}`);
     });
+    return Promise.resolve();
 }
 
 function formatWord(filename) {
@@ -177,7 +165,7 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-	wordElement.style.marginBottom = '15px';
+    wordElement.style.marginBottom = '15px';
 	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
@@ -213,7 +201,6 @@ function createInputFields(number, set) {
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
         
-       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -365,9 +352,12 @@ function saveResponsesToFile() {
     saveToFile(filename, data);
 }
 
-preloadImages().then(() => {
-    console.log('Images preloaded');
-    showInstructions();
-}).catch(error => {
-    console.error('Error preloading images:', error);
-});
+fetchStudyData()
+    .then(imageSets => preloadImages(imageSets))
+    .then(() => {
+        console.log('Images preloaded');
+        showInstructions();
+    })
+    .catch(error => {
+        console.error('Error preloading images:', error);
+    });
