@@ -333,7 +333,7 @@ function saveResponse(set) {
             folder: set.folder
         };
 
-        fetch('https://script.google.com/macros/s/AKfycbw9hhwouQhZUuZD7QJxfkIK4LNcnxYCuok8cY1-pk4bwjkh9vOXl08ca1YH36kKlG0Uug/exec', {
+        fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
