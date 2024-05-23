@@ -309,31 +309,31 @@ function saveResponse(set) {
     return;
   }
 
-  let data = {
-    participantName: experiment.participantName,
-    image: set.path,
-    word: set.word,
-    detail1: details[0],
-    detail2: details[1],
-    detail3: details[2],
-    detail4: details[3],
-    condition: set.condition,
-    folder: set.folder
-  };
+  let data = [
+    experiment.participantName,
+    set.path,
+    set.word,
+    details[0],
+    details[1],
+    details[2],
+    details[3],
+    set.condition,
+    set.folder,
+  ];
 
-  gapi.client.sheets.spreadsheets.values.append({
-    spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
-    range: 'IRoR_Description_FR_Output!A1',
-    valueInputOption: 'RAW',
-    insertDataOption: 'INSERT_ROWS',
-    resource: {
-      values: [
-        [data.participantName, data.image, data.word, data.detail1, data.detail2, data.detail3, data.detail4, data.condition, data.folder]
-      ]
-    }
+  fetch('http://localhost:3000/save-response', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
   }).then(response => {
-    console.log('Data saved successfully', response);
-  }, error => {
+    if (response.ok) {
+      console.log('Data saved successfully');
+    } else {
+      console.error('Error saving data');
+    }
+  }).catch(error => {
     console.error('Error saving data', error);
   });
 
@@ -344,6 +344,7 @@ function saveResponse(set) {
   }
   showNextImage();
 }
+
 
 function endExperiment() {
   console.log('Ending experiment');
