@@ -340,10 +340,7 @@ function saveResponse(set) {
     fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST',
-            'Access-Control-Allow-Headers': 'Content-Type'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     })
@@ -368,6 +365,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 
 function endExperiment() {
