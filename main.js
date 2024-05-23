@@ -1,4 +1,3 @@
-const API_KEY = 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk';
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
