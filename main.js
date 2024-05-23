@@ -1,3 +1,8 @@
+const CLIENT_ID = '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk';
+const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
 let experiment = {
   blocks: 12,
   imagesPerBlock: 54,
@@ -11,19 +16,6 @@ let experiment = {
 };
 
 let typo;
-
-function initializeApp() {
-  typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
-  fetchStudyData()
-    .then(imageSets => preloadImages(imageSets))
-    .then(() => {
-      console.log('Images preloaded');
-      showInstructions();
-    })
-    .catch(error => {
-      console.error('Error preloading images:', error);
-    });
-}
 
 function fetchStudyData() {
   return fetch('/IRoR_Descriptions/study.json')
@@ -44,7 +36,7 @@ function fetchStudyData() {
 
 function preloadImages(imageSets) {
   imageSets.forEach(set => {
-    set.images.sort(); // Sort images alphabetically
+    set.images.sort();
     set.images.forEach(image => {
       let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
       let word = formatWord(image);
@@ -80,7 +72,7 @@ function showInstructions() {
   instructionsDiv.style.flexDirection = 'column';
   instructionsDiv.style.justifyContent = 'center';
   instructionsDiv.style.alignItems = 'center';
-  instructionsDiv.style.height = '100vh'; // Ensure instructions div takes full height
+  instructionsDiv.style.height = '100vh';
 
   const startButton = document.getElementById('startButton');
   startButton.onclick = () => {
@@ -148,32 +140,31 @@ function showNextImage() {
   console.log(`Displaying image from path: ${set.path}`);
   displayImage(set.path, set.word);
   createInputFields(4, set);
-  updateProgressBar();  // Update the progress bar
+  updateProgressBar();
 }
 
 function createInputFields(number, set) {
   const experimentDiv = document.getElementById('experiment');
-  experimentDiv.innerHTML = ''; // Clear previous content
+  experimentDiv.innerHTML = '';
   experimentDiv.style.display = 'flex';
   experimentDiv.style.flexDirection = 'column';
   experimentDiv.style.justifyContent = 'center';
   experimentDiv.style.alignItems = 'center';
-  experimentDiv.style.height = '90vh'; // Adjust height to make room for progress bar
+  experimentDiv.style.height = '90vh';
 
-  // Ensure image and word are displayed in the top half
   let topDiv = document.createElement('div');
   topDiv.style.display = 'flex';
   topDiv.style.flexDirection = 'column';
   topDiv.style.alignItems = 'center';
   topDiv.style.justifyContent = 'center';
-  topDiv.style.flex = '0 0 auto'; // Adjust size
+  topDiv.style.flex = '0 0 auto';
 
   let img = document.createElement('img');
   img.src = set.path;
   img.alt = set.word;
   img.style.display = 'block';
-  img.style.maxHeight = '375px'; // Adjust the size as needed
-  img.style.maxWidth = '100%';   // Adjust the size as needed
+  img.style.maxHeight = '375px';
+  img.style.maxWidth = '100%';
   img.onerror = () => console.error(`Failed to load image at ${img.src}`);
 
   let wordElement = document.createElement('div');
@@ -193,14 +184,14 @@ function createInputFields(number, set) {
   bottomDiv.style.flexDirection = 'column';
   bottomDiv.style.alignItems = 'center';
   bottomDiv.style.justifyContent = 'center';
-  bottomDiv.style.flex = '1'; // Adjust size
+  bottomDiv.style.flex = '1';
 
   for (let i = 0; i < number; i++) {
     let container = document.createElement('div');
     container.style.display = 'flex';
     container.style.justifyContent = 'center';
     container.style.alignItems = 'center';
-    container.style.marginBottom = '15px'; // Increased space between input containers
+    container.style.marginBottom = '15px';
 
     let label = document.createElement('label');
     label.innerText = `Detail ${i + 1}`;
@@ -214,8 +205,8 @@ function createInputFields(number, set) {
     input.name = `detail${i + 1}`;
     input.autocomplete = `off`;
     input.style.flex = '1';
-    input.style.width = '300px'; // Adjusted width
-    input.style.height = '20px'; // Adjusted height
+    input.style.width = '300px';
+    input.style.height = '20px';
 
     container.appendChild(label);
     container.appendChild(input);
@@ -230,29 +221,29 @@ function createButton(text, onClick) {
   let button = document.createElement('button');
   button.innerText = text;
   button.onclick = onClick;
-  button.className = 'submit-button'; // Apply CSS class for styling
+  button.className = 'submit-button';
   document.getElementById('experiment').appendChild(button);
 }
 
 function displayImage(path, word) {
   console.log(`Displaying image: ${path}`);
   const experimentDiv = document.getElementById('experiment');
-  experimentDiv.innerHTML = ''; // Clear previous content
+  experimentDiv.innerHTML = '';
 
   let topDiv = document.createElement('div');
   topDiv.style.display = 'flex';
   topDiv.style.flexDirection = 'column';
   topDiv.style.alignItems = 'center';
   topDiv.style.justifyContent = 'center';
-  topDiv.style.flex = '0 0 auto'; // Adjust size
+  topDiv.style.flex = '0 0 auto';
 
   let img = document.createElement('img');
   img.src = path;
   img.alt = word;
   img.style.display = 'block';
   img.style.margin = '0 auto';
-  img.style.maxHeight = '300px'; // Adjust the size as needed
-  img.style.maxWidth = '100%';   // Adjust the size as needed
+  img.style.maxHeight = '300px';
+  img.style.maxWidth = '100%';
   img.onerror = () => console.error(`Failed to load image at ${path}`);
 
   let wordElement = document.createElement('div');
@@ -280,7 +271,6 @@ function validateDetails(details, word) {
     let detailText = detail.trim();
     if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
 
-    // Split detail into individual words for validation
     let words = detailText.split(' ');
     words.forEach(word => {
       if (!typo.check(word)) {
@@ -291,10 +281,8 @@ function validateDetails(details, word) {
     detailSet.add(detailText.toUpperCase());
   }
 
-  // Ensure all details are unique
   if (detailSet.size !== details.length) return false;
 
-  // Check if there are any invalid details
   if (invalidDetails.length > 0) {
     alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
     return false;
@@ -386,9 +374,9 @@ function updateProgressBar() {
 
 function saveResponsesToFile() {
   console.log('Saving responses to file');
-  let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+  let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n";
   experiment.responses.forEach(response => {
-    data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
   });
 
   const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
