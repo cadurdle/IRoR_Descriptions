@@ -304,49 +304,72 @@ function validateDetails(details, word) {
 }
 
 function saveResponse(set) {
-  console.log('Saving response');
-  let details = [];
-  let invalidDetails = [];
-  let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
+    console.log('Saving response');
+    let details = [];
+    let invalidDetails = [];
+    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
-  for (let i = 1; i <= 4; i++) {
-    let detail = document.getElementById(`detail${i}`).value.trim();
-    details.push(detail);
+    for (let i = 1; i <= 4; i++) {
+        let detail = document.getElementById(`detail${i}`).value.trim();
+        details.push(detail);
 
-    let words = detail.split(' ');
-    words.forEach(word => {
-      if (!typo.check(word)) {
-        invalidDetails.push(word);
-      }
+        let words = detail.split(' ');
+        words.forEach(word => {
+            if (!typo.check(word)) {
+                invalidDetails.push(word);
+            }
+        });
+    }
+
+    if (invalidDetails.length > 0) {
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        return;
+    }
+
+    let data = {
+        participantName: experiment.participantName,
+        image: set.path,
+        word: set.word,
+        detail1: details[0],
+        detail2: details[1],
+        detail3: details[2],
+        detail4: details[3],
+        condition: set.condition,
+        folder: set.folder
+    };
+
+    gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
+        range: 'IRoR_Description_FR_Output!A1',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        resource: {
+            values: [[
+                data.participantName,
+                data.image,
+                data.word,
+                data.detail1,
+                data.detail2,
+                data.detail3,
+                data.detail4,
+                data.condition,
+                data.folder
+            ]]
+        }
+    }).then(response => {
+        console.log('Data saved successfully');
+    }, error => {
+        console.error('Error saving data:', error.result.error.message);
     });
-  }
 
-  if (invalidDetails.length > 0) {
-    alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
-    return;
-  }
-
-  let data = {
-    participantName: experiment.participantName,
-    image: set.path,
-    word: set.word,
-    detail1: details[0],
-    detail2: details[1],
-    detail3: details[2],
-    detail4: details[3],
-    condition: set.condition,
-    folder: set.folder
-  };
-
-  appendRow(data);
-
-  experiment.currentImage++;
-  if (experiment.currentImage >= experiment.imagesPerBlock) {
-    experiment.currentImage = 0;
-    experiment.currentBlock++;
-  }
-  showNextImage();
+    experiment.currentImage++;
+    if (experiment.currentImage >= experiment.imagesPerBlock) {
+        experiment.currentImage = 0;
+        experiment.currentBlock++;
+    }
+    showNextImage();
 }
+
 
 function endExperiment() {
   console.log('Ending experiment');
