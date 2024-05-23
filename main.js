@@ -205,7 +205,7 @@ function createInputFields(number, set) {
     let label = document.createElement('label');
     label.innerText = `Detail ${i + 1}`;
     label.style.color = 'white';
-    label.marginRight = '10px';
+    label.style.marginRight = '10px';
     label.setAttribute('for', `detail${i + 1}`);
 
     let input = document.createElement('input');
@@ -304,114 +304,114 @@ function validateDetails(details, word) {
 }
 
 function saveResponse(set) {
-    console.log('Saving response');
-    let details = [];
-    let invalidDetails = [];
-    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
+  console.log('Saving response');
+  let details = [];
+  let invalidDetails = [];
+  let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
-    for (let i = 1; i <= 4; i++) {
-        let detail = document.getElementById(`detail${i}`).value.trim();
-        details.push(detail);
+  for (let i = 1; i <= 4; i++) {
+    let detail = document.getElementById(`detail${i}`).value.trim();
+    details.push(detail);
 
-        let words = detail.split(' ');
-        words.forEach(word => {
-            if (!typo.check(word)) {
-                invalidDetails.push(word);
-            }
-        });
-    }
-
-    if (invalidDetails.length > 0) {
-        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
-        return;
-    }
-
-    let data = {
-        participantName: experiment.participantName,
-        image: set.path,
-        word: set.word,
-        detail1: details[0],
-        detail2: details[1],
-        detail3: details[2],
-        detail4: details[3],
-        condition: set.condition,
-        folder: set.folder
-    };
-
-    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log('Data saved successfully');
-        } else {
-            return response.json().then(err => {
-                console.error('Error saving data:', err);
-                throw new Error(err.message);
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error saving data:', error);
+    let words = detail.split(' ');
+    words.forEach(word => {
+      if (!typo.check(word)) {
+        invalidDetails.push(word);
+      }
     });
+  }
 
-    experiment.currentImage++;
-    if (experiment.currentImage >= experiment.imagesPerBlock) {
-        experiment.currentImage = 0;
-        experiment.currentBlock++;
+  if (invalidDetails.length > 0) {
+    alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+    return;
+  }
+
+  let data = {
+    participantName: experiment.participantName,
+    image: set.path,
+    word: set.word,
+    detail1: details[0],
+    detail2: details[1],
+    detail3: details[2],
+    detail4: details[3],
+    condition: set.condition,
+    folder: set.folder
+  };
+
+  fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log('Data saved successfully');
+    } else {
+      return response.json().then(err => {
+        console.error('Error saving data:', err);
+        throw new Error(err.message);
+      });
     }
-    showNextImage();
+  })
+  .catch(error => {
+    console.error('Error saving data:', error);
+  });
+
+  experiment.currentImage++;
+  if (experiment.currentImage >= experiment.imagesPerBlock) {
+    experiment.currentImage = 0;
+    experiment.currentBlock++;
+  }
+  showNextImage();
 }
 
 function endExperiment() {
-    console.log('Ending experiment');
-    showThankYouMessage();
-    saveResponsesToFile();
+  console.log('Ending experiment');
+  showThankYouMessage();
+  saveResponsesToFile();
 }
 
 function showThankYouMessage() {
-    displayText("Thank you for participating!", 'instructions');
+  displayText("Thank you for participating!", 'instructions');
 }
 
 function displayText(text, elementId) {
-    const element = document.getElementById(elementId);
-    element.innerText = text;
-    element.style.color = 'white';
+  const element = document.getElementById(elementId);
+  element.innerText = text;
+  element.style.color = 'white';
 }
 
 function updateProgressBar() {
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
-    progressBarFill.style.width = `${progressPercentage}%`;
+  const progressBarFill = document.getElementById('progress-bar-fill');
+  const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+  progressBarFill.style.width = `${progressPercentage}%`;
 }
 
 function saveResponsesToFile() {
-    console.log('Saving responses to file');
-    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
-    experiment.responses.forEach(response => {
-        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
-    });
+  console.log('Saving responses to file');
+  let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+  experiment.responses.forEach(response => {
+    data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+  });
 
-    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
+  const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+  saveToFile(filename, data);
 }
 
 function saveToFile(filename, data) {
-    let blob = new Blob([data], { type: 'text/csv' });
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
+  let blob = new Blob([data], { type: 'text/csv' });
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
 
 function getFormattedDate() {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}${day}${year}`;
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}${day}${year}`;
 }
