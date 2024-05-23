@@ -307,6 +307,7 @@ function saveResponse(set) {
     console.log('Saving response');
     let details = [];
     let invalidDetails = [];
+    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
     for (let i = 1; i <= 4; i++) {
         let detail = document.getElementById(`detail${i}`).value.trim();
@@ -365,8 +366,6 @@ function saveResponse(set) {
     }
     showNextImage();
 }
-
-
 
 function endExperiment() {
   console.log('Ending experiment');
