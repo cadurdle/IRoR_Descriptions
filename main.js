@@ -338,26 +338,26 @@ function saveResponse(set) {
         folder: set.folder
     };
 
-    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log('Data saved successfully');
-        } else {
-            return response.json().then(err => {
-                console.error('Error saving data:', err);
-                throw new Error(err.message);
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error saving data:', error);
+fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec?key=AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(data)
+})
+.then(response => {
+  if (response.ok) {
+    console.log('Data saved successfully');
+  } else {
+    return response.json().then(err => {
+      console.error('Error saving data:', err);
+      throw new Error(err.message);
     });
+  }
+})
+.catch(error => {
+  console.error('Error saving data:', error);
+});
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
