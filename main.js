@@ -12,17 +12,26 @@ let experiment = {
 
 let typo;
 
-window.onload = function() {
-    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries" });
-    fetchStudyData()
-        .then(imageSets => preloadImages(imageSets))
-        .then(() => {
-            console.log('Images preloaded');
-            showInstructions();
-        })
-        .catch(error => {
-            console.error('Error preloading images:', error);
+window.onload = async function() {
+    try {
+        typo = new Typo("en_US", false, false, {
+            dictionaryPath: "/IRoR_Descriptions/typo/dictionaries",
+            asyncLoad: true,
+            loadedCallback: function() {
+                fetchStudyData()
+                    .then(imageSets => preloadImages(imageSets))
+                    .then(() => {
+                        console.log('Images preloaded');
+                        showInstructions();
+                    })
+                    .catch(error => {
+                        console.error('Error preloading images:', error);
+                    });
+            }
         });
+    } catch (error) {
+        console.error('Error initializing Typo:', error);
+    }
 };
 
 function fetchStudyData() {
@@ -275,7 +284,7 @@ function validateDetails(details, word) {
 
     let detailSet = new Set();
     let invalidDetails = [];
-    let typo = new Typo('en_US');
+    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
     for (let detail of details) {
         let detailText = detail.trim();
