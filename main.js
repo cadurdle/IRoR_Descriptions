@@ -13,7 +13,7 @@ let experiment = {
 let typo;
 
 window.onload = function() {
-    typo = new Typo("en_US", false, false, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries" });
+    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries" });
     fetchStudyData()
         .then(imageSets => preloadImages(imageSets))
         .then(() => {
