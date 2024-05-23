@@ -1,3 +1,16 @@
+/* globals chrome: false */
+/* globals __dirname: false */
+/* globals require: false */
+/* globals Buffer: false */
+/* globals module: false */
+
+/**
+ * Typo is a JavaScript implementation of a spellchecker using hunspell-style 
+ * dictionaries.
+ */
+
+var Typo;
+
 (function () {
 "use strict";
 
@@ -64,7 +77,7 @@ Typo = function (dictionary, affData, wordsData, settings) {
 		if (affData && wordsData) {
 			setup();
 		}
-		// Loading data for Chrome extensions.
+		// Loading data for Chrome extentions.
 		else if (typeof window !== 'undefined' && 'chrome' in window && 'extension' in window.chrome && 'getURL' in window.chrome.extension) {
 			if (settings.dictionaryPath) {
 				path = settings.dictionaryPath;
@@ -232,7 +245,7 @@ Typo.prototype = {
 					
 					req.onerror = function() {
 						reject(req.statusText);
-					}
+					};
 				});
 			}
 		
@@ -281,7 +294,7 @@ Typo.prototype = {
 			line = this._removeAffixComments(lines[i]);
 			line = line.trim();
 			
-			if ( ! line ) {
+			if (!line) {
 				continue;
 			}
 			
@@ -289,7 +302,7 @@ Typo.prototype = {
 			
 			var ruleType = definitionParts[0];
 			
-			if (ruleType == "PFX" || ruleType == "SFX") {
+			if (ruleType === "PFX" || ruleType === "SFX") {
 				var ruleCode = definitionParts[1];
 				var combineable = definitionParts[2];
 				numEntries = parseInt(definitionParts[3], 10);
@@ -325,9 +338,9 @@ Typo.prototype = {
 						}
 					}
 					
-					if (charactersToRemove != "0") {
+					if (charactersToRemove !== "0") {
 						if (ruleType === "SFX") {
-							entry.remove = new RegExp(charactersToRemove  + "$");
+							entry.remove = new RegExp(charactersToRemove + "$");
 						}
 						else {
 							entry.remove = charactersToRemove;
@@ -337,7 +350,7 @@ Typo.prototype = {
 					entries.push(entry);
 				}
 				
-				rules[ruleCode] = { "type" : ruleType, "combineable" : (combineable == "Y"), "entries" : entries };
+				rules[ruleCode] = { type: ruleType, combineable: (combineable === "Y"), entries: entries };
 				
 				i += numEntries;
 			}
@@ -357,7 +370,7 @@ Typo.prototype = {
 				lineParts = line.split(/\s+/);
 				
 				if (lineParts.length === 3) {
-					this.replacementTable.push([ lineParts[1], lineParts[2] ]);
+					this.replacementTable.push([lineParts[1], lineParts[2]]);
 				}
 			}
 			else {
@@ -385,7 +398,7 @@ Typo.prototype = {
 		// This used to remove any string starting with '#' up to the end of the line,
 		// but some COMPOUNDRULE definitions include '#' as part of the rule.
 		// So, only remove lines that begin with a comment, optionally preceded by whitespace.
-		if ( line.match( /^\s*#/, "" ) ) {
+		if (line.match(/^\s*#/, "")) {
 			return '';
 		}
 		
@@ -439,7 +452,7 @@ Typo.prototype = {
 				var ruleCodesArray = this.parseRuleCodes(parts[1]);
 				
 				// Save the ruleCodes for compound word situations.
-				if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) == -1) {
+				if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) === -1) {
 					addWord(word, ruleCodesArray);
 				}
 				
@@ -463,7 +476,7 @@ Typo.prototype = {
 									var combineRule = this.rules[combineCode];
 									
 									if (combineRule) {
-										if (combineRule.combineable && (rule.type != combineRule.type)) {
+										if (combineRule.combineable && (rule.type !== combineRule.type)) {
 											var otherNewWords = this._applyRule(newWord, combineRule);
 											
 											for (var iii = 0, _iiilen = otherNewWords.length; iii < _iiilen; iii++) {
@@ -580,6 +593,13 @@ Typo.prototype = {
 						if (continuationRule) {
 							newWords = newWords.concat(this._applyRule(newWord, continuationRule));
 						}
+						/*
+						else {
+							// This shouldn't happen, but it does, at least in the de_DE dictionary.
+							// I think the author mistakenly supplied lower-case rule codes instead 
+							// of upper-case.
+						}
+						*/
 					}
 				}
 			}
@@ -746,182 +766,97 @@ Typo.prototype = {
 		if (this.memoized.hasOwnProperty(word)) {
 			var memoizedLimit = this.memoized[word]['limit'];
 
-			// If this suggestion list was already built with this limit or a greater limit, return the list.
+			// If the previously suggested list is greater than or equal to limit, return the first [limit] suggestions
 			if (memoizedLimit >= limit) {
 				return this.memoized[word]['suggestions'].slice(0, limit);
 			}
 		}
-		else {
-			this.memoized[word] = {};
+
+		if (this.check(word)) {
+			return [];
 		}
 
 		var self = this;
-		var editDistance = function(a, b) {
-			var tmp;
-			if (a.length === 0) { return b.length; }
-			if (b.length === 0) { return a.length; }
-			if (a.length > b.length) { tmp = a; a = b; b = tmp; }
+		var edits1 = [];
+		var edits2 = [];
+		var suggestions = [];
+		var seen = new Set();
+		var re = new RegExp("^" + word + "$", "i");
 
-			var i, j, res, alen = a.length, blen = b.length, row = Array(alen);
-			for (i = 0; i <= alen; i++) { row[i] = i; }
+		// Known function as defined by Norvig
+		function known(words) {
+			var knownWords = [];
 
-			for (i = 1; i <= blen; i++) {
-				res = i;
-				for (j = 1; j <= alen; j++) {
-					tmp = row[j - 1];
-					row[j - 1] = res;
-					res = b[i - 1] === a[j - 1] ? tmp : Math.min(tmp + 1, Math.min(res + 1, row[j] + 1));
-				}
-			}
-			return res;
-		};
-
-		var knownWords = function(words) {
-			var rv = [];
 			for (var i = 0; i < words.length; i++) {
 				if (self.check(words[i])) {
-					rv.push(words[i]);
+					knownWords.push(words[i]);
 				}
 			}
-			return rv;
-		};
 
-		var i, _len, ed1, ed2, ed3, ed4;
-
-		// Return the word itself if it's spelled correctly.
-		if (self.check(word)) {
-			this.memoized[word]['suggestions'] = [word];
-			this.memoized[word]['limit'] = limit;
-			return [word];
+			return knownWords;
 		}
 
-		var alphabet = this.alphabet || "abcdefghijklmnopqrstuvwxyz";
-		var alphabetLength = alphabet.length;
+		// Edit function as defined by Norvig
+		function edits(word) {
+			var result = [];
 
-		var results = {};
-		var maxEditDistance = 2;
-		var candidates = [];
-		var candidate;
-		var permutations = {};
-
-		// Check all permutations of the word with an edit distance of 1 (deletes, inserts, replaces, and swaps).
-		for (i = 0, _len = word.length; i < _len; i++) {
-			ed1 = word.slice(0, i) + word.slice(i + 1);
-
-			// Don't check the same permutation twice.
-			if (!permutations.hasOwnProperty(ed1)) {
-				candidates.push(ed1);
-				permutations[ed1] = 1;
+			for (var i = 0; i < word.length; i++) {
+				result.push(word.slice(0, i) + word.slice(i + 1));
 			}
 
-			for (var j = 0; j < alphabetLength; j++) {
-				// Replace the letter at i with this letter.
-				ed2 = word.slice(0, i) + alphabet[j] + word.slice(i + 1);
-				if (!permutations.hasOwnProperty(ed2)) {
-					candidates.push(ed2);
-					permutations[ed2] = 1;
-				}
+			for (var i = 0; i < word.length - 1; i++) {
+				result.push(word.slice(0, i) + word[i + 1] + word[i] + word.slice(i + 2));
+			}
 
-				// Insert this letter at i.
-				ed3 = word.slice(0, i) + alphabet[j] + word.slice(i);
-				if (!permutations.hasOwnProperty(ed3)) {
-					candidates.push(ed3);
-					permutations[ed3] = 1;
-				}
-
-				// Also check deletes, replaces, and inserts at i+1.
-				ed4 = word.slice(0, i + 1) + alphabet[j] + word.slice(i + 1);
-				if (!permutations.hasOwnProperty(ed4)) {
-					candidates.push(ed4);
-					permutations[ed4] = 1;
+			for (var i = 0; i < word.length; i++) {
+				for (var j = 0; j < self.alphabet.length; j++) {
+					result.push(word.slice(0, i) + self.alphabet[j] + word.slice(i + 1));
 				}
 			}
+
+			for (var i = 0; i <= word.length; i++) {
+				for (var j = 0; j < self.alphabet.length; j++) {
+					result.push(word.slice(0, i) + self.alphabet[j] + word.slice(i));
+				}
+			}
+
+			return result;
 		}
 
-		// Add the original word as a candidate too
-		candidates.push(word);
-
-		var candidateFrequency = {};
-
-		for (i = 0, _len = candidates.length; i < _len; i++) {
-			candidate = candidates[i];
-
-			if (results.hasOwnProperty(candidate)) {
-				continue;
-			}
-
-			if (self.check(candidate)) {
-				results[candidate] = 1;
-			}
-
-			// Calculate the candidate frequency to return the most frequent suggestions
-			if (candidateFrequency[candidate]) {
-				candidateFrequency[candidate]++;
-			} else {
-				candidateFrequency[candidate] = 1;
-			}
-
-			// Try all permutations of the candidate with an edit distance of 1.
-			for (var j = 0; j < candidate.length; j++) {
-				ed1 = candidate.slice(0, j) + candidate.slice(j + 1);
-
-				if (!permutations.hasOwnProperty(ed1)) {
-					permutations[ed1] = 1;
-					if (self.check(ed1)) {
-						results[ed1] = 1;
-					}
-				}
-
-				for (var k = 0; k < alphabetLength; k++) {
-					ed2 = candidate.slice(0, j) + alphabet[k] + candidate.slice(j + 1);
-					if (!permutations.hasOwnProperty(ed2)) {
-						permutations[ed2] = 1;
-						if (self.check(ed2)) {
-							results[ed2] = 1;
-						}
-					}
-
-					ed3 = candidate.slice(0, j) + alphabet[k] + candidate.slice(j);
-					if (!permutations.hasOwnProperty(ed3)) {
-						permutations[ed3] = 1;
-						if (self.check(ed3)) {
-							results[ed3] = 1;
-						}
-					}
-
-					ed4 = candidate.slice(0, j + 1) + alphabet[k] + candidate.slice(j + 1);
-					if (!permutations.hasOwnProperty(ed4)) {
-						permutations[ed4] = 1;
-						if (self.check(ed4)) {
-							results[ed4] = 1;
-						}
-					}
-				}
-			}
+		// Populate the alphabet if it hasn't been done already
+		if (!this.alphabet) {
+			this.alphabet = "abcdefghijklmnopqrstuvwxyz";
 		}
 
-		var sortedResults = Object.keys(results).sort(function(a, b) {
-			// Sort suggestions by candidate frequency, then by edit distance
-			if (candidateFrequency[b] - candidateFrequency[a] !== 0) {
-				return candidateFrequency[b] - candidateFrequency[a];
-			} else {
-				return editDistance(a, word) - editDistance(b, word);
-			}
-		});
+		// Start with the original word and its edits at distance 1
+		edits1 = edits(word);
 
-		this.memoized[word]['suggestions'] = sortedResults;
-		this.memoized[word]['limit'] = limit;
+		// Check known edits at distance 1
+		var knownEdits1 = known(edits1);
 
-		return sortedResults.slice(0, limit);
+		// If there are known words at edit distance 1, return them
+		if (knownEdits1.length > 0) {
+			this.memoized[word] = { suggestions: knownEdits1, limit: limit };
+			return knownEdits1.slice(0, limit);
+		}
+
+		// Otherwise, check edits at distance 2
+		for (var i = 0; i < edits1.length; i++) {
+			edits2 = edits2.concat(edits(edits1[i]));
+		}
+
+		var knownEdits2 = known(edits2);
+
+		// If there are known words at edit distance 2, return them
+		if (knownEdits2.length > 0) {
+			this.memoized[word] = { suggestions: knownEdits2, limit: limit };
+			return knownEdits2.slice(0, limit);
+		}
+
+		// If no suggestions were found, return an empty array
+		this.memoized[word] = { suggestions: [], limit: limit };
+		return [];
 	}
 };
 
-if (typeof module !== 'undefined') {
-	module.exports = Typo;
-}
-else {
-	window.Typo = Typo;
-}
-
 })();
-
