@@ -13,21 +13,19 @@ let experiment = {
 let typo;
 
 window.onload = function() {
-    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: true, loadedCallback: onDictionaryLoaded });
+    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: true, loadedCallback: function() {
+        console.log("Dictionary loaded");
+        fetchStudyData()
+            .then(imageSets => preloadImages(imageSets))
+            .then(() => {
+                console.log('Images preloaded');
+                showInstructions();
+            })
+            .catch(error => {
+                console.error('Error preloading images:', error);
+            });
+    }});
 };
-
-function onDictionaryLoaded() {
-    console.log('Dictionary loaded');
-    fetchStudyData()
-        .then(imageSets => preloadImages(imageSets))
-        .then(() => {
-            console.log('Images preloaded');
-            showInstructions();
-        })
-        .catch(error => {
-            console.error('Error preloading images:', error);
-        });
-}
 
 function fetchStudyData() {
     return fetch('/IRoR_Descriptions/study.json')
@@ -312,6 +310,7 @@ function saveResponse(set) {
     console.log('Saving response');
     let details = [];
     let invalidDetails = [];
+    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries', asyncLoad: false });
 
     for (let i = 1; i <= 4; i++) {
         let detail = document.getElementById(`detail${i}`).value.trim();
