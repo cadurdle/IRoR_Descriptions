@@ -338,26 +338,29 @@ function saveResponse(set) {
         folder: set.folder
     };
 
-fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec?key=AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(data)
-})
-.then(response => {
-  if (response.ok) {
-    console.log('Data saved successfully');
-  } else {
-    return response.json().then(err => {
-      console.error('Error saving data:', err);
-      throw new Error(err.message);
+    // Add the current response to the experiment responses
+    experiment.responses.push(data);
+
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec?key=AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log('Data saved successfully');
+        } else {
+            return response.json().then(err => {
+                console.error('Error saving data:', err);
+                throw new Error(err.message);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error saving data:', error);
     });
-  }
-})
-.catch(error => {
-  console.error('Error saving data:', error);
-});
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
@@ -368,50 +371,50 @@ fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvN
 }
 
 function endExperiment() {
-  console.log('Ending experiment');
-  showThankYouMessage();
-  saveResponsesToFile();
+    console.log('Ending experiment');
+    showThankYouMessage();
+    saveResponsesToFile();
 }
 
 function showThankYouMessage() {
-  displayText("Thank you for participating!", 'instructions');
+    displayText("Thank you for participating!", 'instructions');
 }
 
 function displayText(text, elementId) {
-  const element = document.getElementById(elementId);
-  element.innerText = text;
-  element.style.color = 'white';
-}
-
-function getFormattedDate() {
-  const date = new Date();
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${month}${day}${year}`;
-}
-
-function saveToFile(filename, data) {
-  let blob = new Blob([data], { type: 'text/csv' });
-  let a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
+    const element = document.getElementById(elementId);
+    element.innerText = text;
+    element.style.color = 'white';
 }
 
 function updateProgressBar() {
-  const progressBarFill = document.getElementById('progress-bar-fill');
-  const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
-  progressBarFill.style.width = `${progressPercentage}%`;
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+    progressBarFill.style.width = `${progressPercentage}%`;
 }
 
 function saveResponsesToFile() {
-  console.log('Saving responses to file');
-  let data = "image,word,detail1,detail2,detail3,detail4,condition,folder\n";
-  experiment.responses.forEach(response => {
-    data += `${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
-  });
+    console.log('Saving responses to file');
+    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
 
-  const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-  saveToFile(filename, data);
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
+
+function saveToFile(filename, data) {
+    let blob = new Blob([data], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}
+
+function getFormattedDate() {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}${day}${year}`;
 }
