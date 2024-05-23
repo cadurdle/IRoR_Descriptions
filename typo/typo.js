@@ -45,173 +45,202 @@ var Typo;
  */
 
 Typo = function (dictionary, affData, wordsData, settings) {
-	settings = settings || {};
+    settings = settings || {};
 
-	this.dictionary = null;
-	
-	this.rules = {};
-	this.dictionaryTable = {};
-	
-	this.compoundRules = [];
-	this.compoundRuleCodes = {};
-	
-	this.replacementTable = [];
-	
-	this.flags = settings.flags || {}; 
-	
-	this.memoized = {};
+    this.dictionary = null;
+    
+    this.rules = {};
+    this.dictionaryTable = {};
+    
+    this.compoundRules = [];
+    this.compoundRuleCodes = {};
+    
+    this.replacementTable = [];
+    
+    this.flags = settings.flags || {}; 
+    
+    this.memoized = {};
 
-	this.loaded = false;
-	
-	var self = this;
-	
-	var path;
-	
-	// Loop-control variables.
-	var i, j, _len, _jlen;
-	
-	if (dictionary) {
-		self.dictionary = dictionary;
-		
-		// If the data is preloaded, just setup the Typo object.
-		if (affData && wordsData) {
-			setup();
-		}
-		// Loading data for Chrome extentions.
-		else if (typeof window !== 'undefined' && 'chrome' in window && 'extension' in window.chrome && 'getURL' in window.chrome.extension) {
-			if (settings.dictionaryPath) {
-				path = settings.dictionaryPath;
-			}
-			else {
-				path = "typo/dictionaries";
-			}
-			
-			if (!affData) readDataFile(chrome.extension.getURL(path + "/" + dictionary + "/" + dictionary + ".aff"), setAffData);
-			if (!wordsData) readDataFile(chrome.extension.getURL(path + "/" + dictionary + "/" + dictionary + ".dic"), setWordsData);
-		}
-		else {
-			if (settings.dictionaryPath) {
-				path = settings.dictionaryPath;
-			}
-			else if (typeof __dirname !== 'undefined') {
-				path = __dirname + '/dictionaries';
-			}
-			else {
-				path = './dictionaries';
-			}
-			
-			if (!affData) readDataFile(path + "/" + dictionary + "/" + dictionary + ".aff", setAffData);
-			if (!wordsData) readDataFile(path + "/" + dictionary + "/" + dictionary + ".dic", setWordsData);
-		}
-	}
-	
-	function readDataFile(url, setFunc) {
-		var response = self._readFile(url, null, settings.asyncLoad);
-		
-		if (settings.asyncLoad) {
-			response.then(function(data) {
-				setFunc(data);
-			});
-		}
-		else {
-			setFunc(response);
-		}
-	}
+    this.loaded = false;
+    
+    var self = this;
+    
+    var path;
+    
+    // Loop-control variables.
+    var i, j, _len, _jlen;
+    
+    if (dictionary) {
+        self.dictionary = dictionary;
+        
+        // If the data is preloaded, just setup the Typo object.
+        if (affData && wordsData) {
+            setup();
+        }
+        // Loading data for Chrome extensions.
+        else if (typeof window !== 'undefined' && 'chrome' in window && 'extension' in window.chrome && 'getURL' in window.chrome.extension) {
+            if (settings.dictionaryPath) {
+                path = settings.dictionaryPath;
+            }
+            else {
+                path = "typo/dictionaries";
+            }
+            
+            if (!affData) readDataFile(chrome.extension.getURL(path + "/" + dictionary + "/" + dictionary + ".aff"), setAffData);
+            if (!wordsData) readDataFile(chrome.extension.getURL(path + "/" + dictionary + "/" + dictionary + ".dic"), setWordsData);
+        }
+        else {
+            if (settings.dictionaryPath) {
+                path = settings.dictionaryPath;
+            }
+            else if (typeof __dirname !== 'undefined') {
+                path = __dirname + '/dictionaries';
+            }
+            else {
+                path = './dictionaries';
+            }
+            
+            if (!affData) readDataFile(path + "/" + dictionary + "/" + dictionary + ".aff", setAffData);
+            if (!wordsData) readDataFile(path + "/" + dictionary + "/" + dictionary + ".dic", setWordsData);
+        }
+    }
+    
+    function readDataFile(url, setFunc) {
+        var response = self._readFile(url, null, settings.asyncLoad);
+        
+        if (settings.asyncLoad) {
+            response.then(function(data) {
+                setFunc(data);
+            }).catch(function(error) {
+                console.error('Failed to load file:', error);
+            });
+        }
+        else {
+            setFunc(response);
+        }
+    }
 
-	function setAffData(data) {
-		affData = data;
+    function setAffData(data) {
+        affData = data;
 
-		if (wordsData) {
-			setup();
-		}
-	}
+        if (wordsData) {
+            setup();
+        }
+    }
 
-	function setWordsData(data) {
-		wordsData = data;
+    function setWordsData(data) {
+        wordsData = data;
 
-		if (affData) {
-			setup();
-		}
-	}
+        if (affData) {
+            setup();
+        }
+    }
 
-	function setup() {
-		self.rules = self._parseAFF(affData);
-		
-		// Save the rule codes that are used in compound rules.
-		self.compoundRuleCodes = {};
-		
-		for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
-			var rule = self.compoundRules[i];
-			
-			for (j = 0, _jlen = rule.length; j < _jlen; j++) {
-				self.compoundRuleCodes[rule[j]] = [];
-			}
-		}
-		
-		// If we add this ONLYINCOMPOUND flag to self.compoundRuleCodes, then _parseDIC
-		// will do the work of saving the list of words that are compound-only.
-		if ("ONLYINCOMPOUND" in self.flags) {
-			self.compoundRuleCodes[self.flags.ONLYINCOMPOUND] = [];
-		}
-		
-		self.dictionaryTable = self._parseDIC(wordsData);
-		
-		// Get rid of any codes from the compound rule codes that are never used 
-		// (or that were special regex characters).  Not especially necessary... 
-		for (i in self.compoundRuleCodes) {
-			if (self.compoundRuleCodes[i].length === 0) {
-				delete self.compoundRuleCodes[i];
-			}
-		}
-		
-		// Build the full regular expressions for each compound rule.
-		// I have a feeling (but no confirmation yet) that this method of 
-		// testing for compound words is probably slow.
-		for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
-			var ruleText = self.compoundRules[i];
-			
-			var expressionText = "";
-			
-			for (j = 0, _jlen = ruleText.length; j < _jlen; j++) {
-				var character = ruleText[j];
-				
-				if (character in self.compoundRuleCodes) {
-					expressionText += "(" + self.compoundRuleCodes[character].join("|") + ")";
-				}
-				else {
-					expressionText += character;
-				}
-			}
-			
-			self.compoundRules[i] = new RegExp(expressionText, "i");
-		}
-		
-		self.loaded = true;
-		
-		if (settings.asyncLoad && settings.loadedCallback) {
-			settings.loadedCallback(self);
-		}
-	}
-	
-	return this;
+    function setup() {
+        self.rules = self._parseAFF(affData);
+        
+        // Save the rule codes that are used in compound rules.
+        self.compoundRuleCodes = {};
+        
+        for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
+            var rule = self.compoundRules[i];
+            
+            for (j = 0, _jlen = rule.length; j < _jlen; j++) {
+                self.compoundRuleCodes[rule[j]] = [];
+            }
+        }
+        
+        // If we add this ONLYINCOMPOUND flag to self.compoundRuleCodes, then _parseDIC
+        // will do the work of saving the list of words that are compound-only.
+        if ("ONLYINCOMPOUND" in self.flags) {
+            self.compoundRuleCodes[self.flags.ONLYINCOMPOUND] = [];
+        }
+        
+        self.dictionaryTable = self._parseDIC(wordsData);
+        
+        // Get rid of any codes from the compound rule codes that are never used 
+        // (or that were special regex characters).  Not especially necessary... 
+        for (i in self.compoundRuleCodes) {
+            if (self.compoundRuleCodes[i].length === 0) {
+                delete self.compoundRuleCodes[i];
+            }
+        }
+        
+        // Build the full regular expressions for each compound rule.
+        // I have a feeling (but no confirmation yet) that this method of 
+        // testing for compound words is probably slow.
+        for (i = 0, _len = self.compoundRules.length; i < _len; i++) {
+            var ruleText = self.compoundRules[i];
+            
+            var expressionText = "";
+            
+            for (j = 0, _jlen = ruleText.length; j < _jlen; j++) {
+                var character = ruleText[j];
+                
+                if (character in self.compoundRuleCodes) {
+                    expressionText += "(" + self.compoundRuleCodes[character].join("|") + ")";
+                }
+                else {
+                    expressionText += character;
+                }
+            }
+            
+            self.compoundRules[i] = new RegExp(expressionText, "i");
+        }
+        
+        self.loaded = true;
+        
+        if (settings.asyncLoad && settings.loadedCallback) {
+            settings.loadedCallback(self);
+        }
+    }
+    
+    return this;
 };
 
-Typo.prototype = {
-	/**
-	 * Loads a Typo instance from a hash of all of the Typo properties.
-	 *
-	 * @param object obj A hash of Typo properties, probably gotten from a JSON.parse(JSON.stringify(typo_instance)).
-	 */
-	
-	load : function (obj) {
-		for (var i in obj) {
-			if (obj.hasOwnProperty(i)) {
-				this[i] = obj[i];
-			}
-		}
-		
-		return this;
-	},
+Typo.prototype._readFile = function (path, charset, async) {
+    charset = charset || "utf8";
+
+    if (typeof XMLHttpRequest !== 'undefined') {
+        var promise;
+        var req = new XMLHttpRequest();
+        req.open("GET", path, true); // Ensure this is set to true for asynchronous
+        if (async) {
+            promise = new Promise(function(resolve, reject) {
+                req.onload = function() {
+                    if (req.status === 200 || req.status === 0) {
+                        resolve(req.responseText);
+                    } else {
+                        reject(new Error(req.statusText));
+                    }
+                };
+                req.onerror = function() {
+                    reject(new Error(req.statusText));
+                };
+            });
+        }
+
+        if (req.overrideMimeType)
+            req.overrideMimeType("text/plain; charset=" + charset);
+
+        req.send(null);
+
+        return async ? promise : req.responseText;
+    } else if (typeof require !== 'undefined') {
+        // Node.js
+        var fs = require("fs");
+        try {
+            if (fs.existsSync(path)) {
+                return fs.readFileSync(path, charset);
+            } else {
+                console.log("Path " + path + " does not exist.");
+            }
+        } catch (e) {
+            console.log(e);
+            return '';
+        }
+    }
+};
 	
 	/**
 	 * Read the contents of a file.
