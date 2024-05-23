@@ -6,46 +6,9 @@
     <title>Psychology Experiment</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="/IRoR_Descriptions/typo/typo.js"></script>
     <script src="main.js" defer></script>
-    <script>
-        function initClient() {
-            gapi.client.init({
-                apiKey: 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk',
-                clientId: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
-                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-                scope: "https://www.googleapis.com/auth/spreadsheets"
-            }).then(() => {
-                const authInstance = gapi.auth2.getAuthInstance();
-                authInstance.isSignedIn.listen(updateSigninStatus);
-                updateSigninStatus(authInstance.isSignedIn.get());
-            }, (error) => {
-                console.error(JSON.stringify(error, null, 2));
-            });
-        }
-
-        function updateSigninStatus(isSignedIn) {
-            if (isSignedIn) {
-                console.log('User signed in');
-            } else {
-                gapi.auth2.getAuthInstance().signIn();
-            }
-        }
-
-        function handleClientLoad() {
-            gapi.load('client:auth2', () => {
-                if (gapi.auth2.getAuthInstance()) {
-                    gapi.auth2.getAuthInstance().then(() => {
-                        initClient();
-                    });
-                } else {
-                    initClient();
-                }
-            });
-        }
-    </script>
 </head>
-<body onload="handleClientLoad()">
+<body>
     <div id="container">
         <!-- Instructions Section -->
         <div id="instructions" class="section instructions-content"></div>
