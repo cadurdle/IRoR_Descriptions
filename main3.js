@@ -338,7 +338,26 @@ function saveResponse(set) {
     folder: set.folder
   };
 
-  appendRow(data);
+  fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log('Data saved successfully');
+    } else {
+      return response.json().then(err => {
+        console.error('Error saving data:', err);
+        throw new Error(err.message);
+      });
+    }
+  })
+  .catch(error => {
+    console.error('Error saving data:', error);
+  });
 
   experiment.currentImage++;
   if (experiment.currentImage >= experiment.imagesPerBlock) {
@@ -396,78 +415,3 @@ function getFormattedDate() {
   const year = date.getFullYear();
   return `${month}${day}${year}`;
 }
-
-function appendRow(data) {
-  gapi.client.sheets.spreadsheets.values.append({
-    spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
-    range: 'Sheet1!A1',
-    valueInputOption: 'RAW',
-    insertDataOption: 'INSERT_ROWS',
-    resource: {
-      values: [
-        [
-          data.participantName,
-          data.image,
-          data.word,
-          data.detail1,
-          data.detail2,
-          data.detail3,
-          data.detail4,
-          data.condition,
-          data.folder
-        ]
-      ]
-    }
-  }).then((response) => {
-    console.log('Data saved successfully', response);
-  }, (error) => {
-    console.error('Error saving data', error);
-  });
-}
-
-// Google API client library initialization
-const CLIENT_ID = '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk';
-const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
-
-function handleClientLoad() {
-  gapi.load('client:auth2', initClient);
-}
-
-function initClient() {
-  gapi.client.init({
-    apiKey: API_KEY,
-    clientId: CLIENT_ID,
-    discoveryDocs: DISCOVERY_DOCS,
-    scope: SCOPES
-  }).then(() => {
-    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-    document.getElementById('authorize_button').onclick = handleAuthClick;
-    document.getElementById('signout_button').onclick = handleSignoutClick;
-  }, (error) => {
-    console.error('Error initializing Google API client', error);
-  });
-}
-
-function updateSigninStatus(isSignedIn) {
-  if (isSignedIn) {
-    document.getElementById('authorize_button').style.display = 'none';
-    document.getElementById('signout_button').style.display = 'block';
-  } else {
-    document.getElementById('authorize_button').style.display = 'block';
-    document.getElementById('signout_button').style.display = 'none';
-  }
-}
-
-function handleAuthClick(event) {
-  gapi.auth2.getAuthInstance().signIn();
-}
-
-function handleSignoutClick(event) {
-  gapi.auth2.getAuthInstance().signOut();
-}
-
-// Load the API client and auth library
-gapi.load('client:auth2', handleClientLoad);
