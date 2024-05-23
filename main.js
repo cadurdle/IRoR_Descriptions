@@ -321,7 +321,7 @@ function saveResponse(set) {
     set.folder,
   ];
 
-  fetch('http://localhost:3000/save-response', {
+  fetch('http://localhost:3000/save-response', { // Ensure this points to your local backend server
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -344,7 +344,6 @@ function saveResponse(set) {
   }
   showNextImage();
 }
-
 
 function endExperiment() {
   console.log('Ending experiment');
