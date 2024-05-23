@@ -271,7 +271,54 @@ Typo.prototype = {
         }
     }
 },
-	
+
+Typo.prototype._readFile = function (path, charset, async) {
+    charset = charset || "utf8";
+
+    if (typeof XMLHttpRequest !== 'undefined') {
+        var promise;
+        var req = new XMLHttpRequest();
+        req.open("GET", path, async);
+
+        if (async) {
+            promise = new Promise(function (resolve, reject) {
+                req.onload = function () {
+                    if (req.status === 200) {
+                        resolve(req.responseText);
+                    } else {
+                        reject(req.statusText);
+                    }
+                };
+
+                req.onerror = function () {
+                    reject(req.statusText);
+                };
+            });
+        }
+
+        if (req.overrideMimeType)
+            req.overrideMimeType("text/plain; charset=" + charset);
+
+        req.send(null);
+
+        return async ? promise : req.responseText;
+    } else if (typeof require !== 'undefined') {
+        // Node.js
+        var fs = require("fs");
+
+        try {
+            if (fs.existsSync(path)) {
+                return fs.readFileSync(path, charset);
+            } else {
+                console.log("Path " + path + " does not exist.");
+            }
+        } catch (e) {
+            console.log(e);
+            return '';
+        }
+    }
+};
+
 	/**
 	 * Parse the rules out from a .aff file.
 	 *
@@ -946,3 +993,4 @@ Typo.prototype = {
 	}
 };
 })();
+
