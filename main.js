@@ -12,7 +12,30 @@ let experiment = {
 
 let typo;
 
-window.onload = function () {
+function initializeApp() {
+  gapi.load('client:auth2', () => {
+    gapi.auth2.init({
+      client_id: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/spreadsheets'
+    }).then(() => {
+      console.log('Google API client initialized');
+      loadClient();
+    }).catch(error => {
+      console.error('Error initializing Google API client', error);
+    });
+  });
+}
+
+function loadClient() {
+  gapi.client.load('sheets', 'v4').then(() => {
+    console.log('Google Sheets API client loaded');
+    startApp();
+  }).catch(error => {
+    console.error('Error loading Google Sheets API client', error);
+  });
+}
+
+function startApp() {
   typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
   fetchStudyData()
     .then(imageSets => preloadImages(imageSets))
@@ -23,31 +46,6 @@ window.onload = function () {
     .catch(error => {
       console.error('Error preloading images:', error);
     });
-
-  // Load the Google API client and OAuth library
-  gapi.load('client:auth2', initializeApp);
-};
-
-function initializeApp() {
-  gapi.client.init({
-    apiKey: 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk',
-    clientId: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
-    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-    scope: 'https://www.googleapis.com/auth/spreadsheets'
-  }).then(() => {
-    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-  }, error => {
-    console.error('Error initializing Google API client:', error);
-  });
-}
-
-function updateSigninStatus(isSignedIn) {
-  if (isSignedIn) {
-    console.log('User signed in');
-  } else {
-    gapi.auth2.getAuthInstance().signIn();
-  }
 }
 
 function fetchStudyData() {
@@ -332,7 +330,6 @@ function saveResponse(set) {
   console.log('Saving response');
   let details = [];
   let invalidDetails = [];
-  let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
   for (let i = 1; i <= 4; i++) {
     let detail = document.getElementById(`detail${i}`).value.trim();
@@ -363,20 +360,24 @@ function saveResponse(set) {
     folder: set.folder
   };
 
-  gapi.client.sheets.spreadsheets.values.append({
-    spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
-    range: 'IRoR_Description_FR_Output!A1',
-    valueInputOption: 'RAW',
-    insertDataOption: 'INSERT_ROWS',
-    resource: {
-      values: [
-        [data.participantName, data.image, data.word, data.detail1, data.detail2, data.detail3, data.detail4, data.condition, data.folder]
-      ]
-    }
-  }).then(response => {
-    console.log('Data saved successfully', response);
-  }, error => {
-    console.error('Error saving data', error);
+  gapi.auth2.getAuthInstance().signIn().then(() => {
+    gapi.client.sheets.spreadsheets.values.append({
+      spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
+      range: 'IRoR_Description_FR_Output!A1',
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: [
+          [data.participantName, data.image, data.word, data.detail1, data.detail2, data.detail3, data.detail4, data.condition, data.folder]
+        ]
+      }
+    }).then(response => {
+      console.log('Data saved successfully', response);
+    }, error => {
+      console.error('Error saving data', error);
+    });
+  }).catch(error => {
+    console.error('Error signing in', error);
   });
 
   experiment.currentImage++;
@@ -435,3 +436,5 @@ function getFormattedDate() {
   const year = date.getFullYear();
   return `${month}${day}${year}`;
 }
+
+window.onload = initializeApp;
