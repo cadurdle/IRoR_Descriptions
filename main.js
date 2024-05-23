@@ -304,60 +304,71 @@ function validateDetails(details, word) {
 }
 
 function saveResponse(set) {
-  console.log('Saving response');
-  let details = [];
-  let invalidDetails = [];
+    console.log('Saving response');
+    let details = [];
+    let invalidDetails = [];
 
-  for (let i = 1; i <= 4; i++) {
-    let detail = document.getElementById(`detail${i}`).value.trim();
-    details.push(detail);
+    for (let i = 1; i <= 4; i++) {
+        let detail = document.getElementById(`detail${i}`).value.trim();
+        details.push(detail);
 
-    let words = detail.split(' ');
-    words.forEach(word => {
-      if (!typo.check(word)) {
-        invalidDetails.push(word);
-      }
-    });
-  }
+        let words = detail.split(' ');
+        words.forEach(word => {
+            if (!typo.check(word)) {
+                invalidDetails.push(word);
+            }
+        });
+    }
 
-  if (invalidDetails.length > 0) {
-    alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
-    return;
-  }
+    if (invalidDetails.length > 0) {
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        return;
+    }
 
-  let data = {
-    participantName: experiment.participantName,
-    image: set.path,
-    word: set.word,
-    detail1: details[0],
-    detail2: details[1],
-    detail3: details[2],
-    detail4: details[3],
-    condition: set.condition,
-    folder: set.folder
-  };
+    let data = {
+        participantName: experiment.participantName,
+        image: set.path,
+        word: set.word,
+        detail1: details[0],
+        detail2: details[1],
+        detail3: details[2],
+        detail4: details[3],
+        condition: set.condition,
+        folder: set.folder
+    };
 
-  fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        },
+        body: JSON.stringify(data)
+    })
     .then(response => {
-      console.log('Data saved successfully');
+        if (response.ok) {
+            console.log('Data saved successfully');
+        } else {
+            return response.json().then(err => {
+                console.error('Error saving data:', err);
+                throw new Error(err.message);
+            });
+        }
     })
     .catch(error => {
-      console.error('Error saving data:', error);
+        console.error('Error saving data:', error);
     });
 
-  experiment.currentImage++;
-  if (experiment.currentImage >= experiment.imagesPerBlock) {
-    experiment.currentImage = 0;
-    experiment.currentBlock++;
-  }
-  showNextImage();
+    experiment.currentImage++;
+    if (experiment.currentImage >= experiment.imagesPerBlock) {
+        experiment.currentImage = 0;
+        experiment.currentBlock++;
+    }
+    showNextImage();
 }
+
 
 function endExperiment() {
   console.log('Ending experiment');
