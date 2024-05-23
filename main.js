@@ -12,7 +12,7 @@ let experiment = {
 
 let typo;
 
-window.onload = function () {
+function initializeApp() {
   typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
   fetchStudyData()
     .then(imageSets => preloadImages(imageSets))
@@ -23,7 +23,29 @@ window.onload = function () {
     .catch(error => {
       console.error('Error preloading images:', error);
     });
-};
+
+  // Google API client initialization
+  google.accounts.id.initialize({
+    client_id: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
+    callback: handleCredentialResponse
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('buttonDiv'),
+    { theme: 'outline', size: 'large' }
+  );
+  google.accounts.id.prompt(); // Display the One Tap dialog
+}
+
+function handleCredentialResponse(response) {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    callback: (tokenResponse) => {
+      gapi.client.setToken(tokenResponse);
+    }
+  });
+  client.requestAccessToken();
+}
 
 function fetchStudyData() {
   return fetch('/IRoR_Descriptions/study.json')
@@ -410,3 +432,6 @@ function getFormattedDate() {
   const year = date.getFullYear();
   return `${month}${day}${year}`;
 }
+
+// Initialize the application
+gapi.load('client:auth2', initializeApp);
