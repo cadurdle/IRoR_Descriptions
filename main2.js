@@ -304,6 +304,7 @@ function validateDetails(details, word) {
     return true;
 }
 
+
 function saveResponse(set) {
     console.log('Saving response');
     let details = [];
