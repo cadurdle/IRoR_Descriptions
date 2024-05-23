@@ -338,10 +338,7 @@ function saveResponse(set) {
         folder: set.folder
     };
 
-    // Add the current response to the experiment responses
-    experiment.responses.push(data);
-
-    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec?key=AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk', {
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -369,6 +366,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 function endExperiment() {
     console.log('Ending experiment');
