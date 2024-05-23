@@ -12,49 +12,6 @@ let experiment = {
 
 let typo;
 
-window.onload = function () {
-    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
-
-    // Load the Google API client library
-    gapi.load('client:auth2', initClient);
-};
-
-function initClient() {
-    gapi.client.init({
-        apiKey: 'YOUR_API_KEY',
-        clientId: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
-        discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-        scope: "https://www.googleapis.com/auth/spreadsheets"
-    }).then(() => {
-        // Handle sign-in state changes
-        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-
-        // Sign in the user if they are not already signed in
-        if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
-            gapi.auth2.getAuthInstance().signIn();
-        }
-
-        // Fetch study data after signing in
-        fetchStudyData()
-            .then(imageSets => preloadImages(imageSets))
-            .then(() => {
-                console.log('Images preloaded');
-                showInstructions();
-            })
-            .catch(error => {
-                console.error('Error preloading images:', error);
-            });
-    });
-}
-
-function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-        // User is signed in, you can proceed with API calls
-    } else {
-        // User is not signed in, handle this case
-    }
-}
-
 function fetchStudyData() {
     return fetch('/IRoR_Descriptions/study.json')
         .then(response => {
@@ -369,32 +326,18 @@ function saveResponse(set) {
 
     gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
-        range: 'IRoR_Description_FR_Output!A1',
+        range: 'IRoR_Description_FR_Output!A1:I1',
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         resource: {
             values: [
-                [
-                    data.participantName,
-                    data.image,
-                    data.word,
-                    data.detail1,
-                    data.detail2,
-                    data.detail3,
-                    data.detail4,
-                    data.condition,
-                    data.folder
-                ]
+                [data.participantName, data.image, data.word, data.detail1, data.detail2, data.detail3, data.detail4, data.condition, data.folder]
             ]
         }
-    }).then(response => {
-        if (response.status === 200) {
-            console.log('Data saved successfully');
-        } else {
-            console.error('Error saving data:', response);
-        }
-    }).catch(error => {
-        console.error('Error saving data:', error);
+    }).then((response) => {
+        console.log('Data saved successfully');
+    }, (error) => {
+        console.error('Error saving data', error);
     });
 
     experiment.currentImage++;
@@ -421,12 +364,21 @@ function displayText(text, elementId) {
     element.style.color = 'white';
 }
 
-function getFormattedDate() {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}${day}${year}`;
+function updateProgressBar() {
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+    progressBarFill.style.width = `${progressPercentage}%`;
+}
+
+function saveResponsesToFile() {
+    console.log('Saving responses to file');
+    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n";
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
 }
 
 function saveToFile(filename, data) {
@@ -437,19 +389,10 @@ function saveToFile(filename, data) {
     a.click();
 }
 
-function updateProgressBar() {
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
-    progressBarFill.style.width = `${progressPercentage}%`;
-}
-
-function saveResponsesToFile() {
-    console.log('Saving responses to file');
-    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
-    experiment.responses.forEach(response => {
-        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
-    });
-
-    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
+function getFormattedDate() {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}${day}${year}`;
 }
