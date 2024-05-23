@@ -12,7 +12,7 @@ let experiment = {
 
 let typo;
 
-function initializeApp() {
+window.onload = function () {
   typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
   fetchStudyData()
     .then(imageSets => preloadImages(imageSets))
@@ -24,27 +24,30 @@ function initializeApp() {
       console.error('Error preloading images:', error);
     });
 
-  // Google API client initialization
-  google.accounts.id.initialize({
-    client_id: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
-    callback: handleCredentialResponse
+  // Load the Google API client and OAuth library
+  gapi.load('client:auth2', initializeApp);
+};
+
+function initializeApp() {
+  gapi.client.init({
+    apiKey: 'AIzaSyCEGEi3s9QcvzfPqAKRh3z8Vp3rTzQ-zZk',
+    clientId: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
+    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+    scope: 'https://www.googleapis.com/auth/spreadsheets'
+  }).then(() => {
+    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+  }, error => {
+    console.error('Error initializing Google API client:', error);
   });
-  google.accounts.id.renderButton(
-    document.getElementById('buttonDiv'),
-    { theme: 'outline', size: 'large' }
-  );
-  google.accounts.id.prompt(); // Display the One Tap dialog
 }
 
-function handleCredentialResponse(response) {
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com',
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    callback: (tokenResponse) => {
-      gapi.client.setToken(tokenResponse);
-    }
-  });
-  client.requestAccessToken();
+function updateSigninStatus(isSignedIn) {
+  if (isSignedIn) {
+    console.log('User signed in');
+  } else {
+    gapi.auth2.getAuthInstance().signIn();
+  }
 }
 
 function fetchStudyData() {
@@ -432,6 +435,3 @@ function getFormattedDate() {
   const year = date.getFullYear();
   return `${month}${day}${year}`;
 }
-
-// Initialize the application
-gapi.load('client:auth2', initializeApp);
