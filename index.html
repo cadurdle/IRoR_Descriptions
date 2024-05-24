@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRoR Image Description Task</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script src="https://cdn.jsdelivr.net/npm/typo-js@1.0.5/typo.js"></script>
     <script src="main.js" defer></script>
 </head>
@@ -26,5 +28,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Add buttons to initiate auth sequence and sign out -->
+    <button id="authorize_button" style="display: none;">Authorize</button>
+    <button id="signout_button" style="display: none;">Sign Out</button>
+
+    <pre id="content" style="white-space: pre-wrap;"></pre>
 </body>
 </html>
+
+   
+   
