@@ -321,21 +321,24 @@ function saveResponse(set) {
     set.folder,
   ];
 
-  fetch('http://localhost:3000/save-response', { // Ensure this points to your local backend server
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  }).then(response => {
-    if (response.ok) {
-      console.log('Data saved successfully');
-    } else {
-      console.error('Error saving data');
-    }
-  }).catch(error => {
-    console.error('Error saving data', error);
-  });
+fetch('https://73444501568.appspot.com/save-response', { // Replace with your actual app URL
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(data),
+})
+.then(response => {
+  if (response.ok) {
+    console.log('Data saved successfully');
+  } else {
+    console.error('Error saving data');
+  }
+})
+.catch(error => {
+  console.error('Error saving data', error);
+});
+
 
   experiment.currentImage++;
   if (experiment.currentImage >= experiment.imagesPerBlock) {
