@@ -321,7 +321,7 @@ function saveResponse(set) {
     set.folder,
   ];
 
-fetch('https://73444501568.appspot.com/save-response', { // Replace with your actual app URL
+fetch('https://iror-description-fr-output.appspot.com/save-response', { // Replace with your actual app URL
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
