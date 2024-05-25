@@ -409,5 +409,3 @@ function getFormattedDate() {
     return `${month}${day}${year}`;
 }
 
-document.getElementById('authorize_button').onclick = handleAuthClick;
-document.getElementById('signout_button').onclick = handleSignoutClick;
