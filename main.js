@@ -446,11 +446,14 @@ function saveResponse(set) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-    }).then(response => {
-        console.log('Data saved successfully', response);
-    }).catch(error => {
-        console.error('Error saving data', error);
-    });
+    })
+    .then(response => response.text())
+	.then(result => {
+  	console.log('Success:', result);
+	})
+	.catch(error => {
+  	console.error('Error:', error);
+	});
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
