@@ -376,7 +376,7 @@ function saveResponse(set) {
         folder: set.folder
     };
     
-    fetch('https://iror-description-fr-output.uc.r.appspot.com/save-response', { // Replace with your actual backend URL
+    fetch('https://iror-description-fr-output.uc.r.appspot.com/', { // Replace with your actual backend URL
     mode: 'cors',
     credentials: 'include',
     method: 'POST',
