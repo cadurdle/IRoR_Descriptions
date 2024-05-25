@@ -376,7 +376,7 @@ function saveResponse(set) {
         folder: set.folder
     };
     
-    fetch('https://iror-description-fr-output.uc.r.appspot.com/', { // Replace with your actual backend URL
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', { // Replace with your actual backend URL
     mode: 'cors',
     credentials: 'include',
     method: 'POST',
