@@ -1,61 +1,57 @@
-const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-
 let experiment = {
-    participantName: '',
+    blocks: 12,
+    imagesPerBlock: 54,
+    congruentSets: 6,
+    incongruentSets: 6,
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
-    blocks: 0,
-    imagesPerBlock: 0,
     responses: []
 };
 
-window.onload = function () {
-    typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
-    fetchStudyData()
-        .then(imageSets => preloadImages(imageSets))
-        .then(() => {
-            console.log('Images preloaded');
-            showInstructions();
-        })
-        .catch(error => {
-            console.error('Error preloading images:', error);
-        });
-};
-
-function fetchStudyData() {
-    return fetch('/IRoR_Descriptions/study.json')
+function fetchImages(condition, setNumber) {
+    console.log(`Fetching images from /images/${condition}/${setNumber}`);
+    return fetch(`/images/${condition}/${setNumber}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
-        .then(data => {
-            return data.imageSets;
+        .then(images => {
+            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
+            return images;
         })
         .catch(error => {
-            console.error('Error fetching study data:', error);
+            console.error('Error fetching images:', error);
             return [];
         });
 }
 
-function preloadImages(imageSets) {
-    imageSets.forEach(set => {
-        set.images.sort(); // Sort images alphabetically
-        set.images.forEach(image => {
-            let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
+function preloadImages() {
+    let promises = [];
+    for (let i = 1; i <= experiment.congruentSets; i++) {
+        promises.push(loadImagesFromPath('congruent', `studyset${i}`));
+    }
+    for (let i = 1; i <= experiment.incongruentSets; i++) {
+        promises.push(loadImagesFromPath('incongruent', `studyset${i}`));
+    }
+    return Promise.all(promises);
+}
+
+function loadImagesFromPath(condition, set) {
+    return fetchImages(condition, set).then(images => {
+        images.forEach(image => {
             let word = formatWord(image);
             experiment.imageSets.push({
-                path: path,
+                path: `/images/${condition}/${set}/${image}`,
                 word: word,
-                condition: set.condition,
-                folder: set.setNumber
+                condition: condition,
+                folder: set
             });
         });
+        console.log(`Loaded images from ${condition}_resources/${set}`);
     });
-    return Promise.resolve();
 }
 
 function formatWord(filename) {
@@ -64,6 +60,7 @@ function formatWord(filename) {
     name = name.replace(/_/g, ' ');
     return name.toUpperCase();
 }
+
 
 function showInstructions() {
     const instructionsDiv = document.getElementById('instructions');
@@ -127,7 +124,6 @@ function showInstructionPages() {
 
 function startTrials() {
     console.log('Starting trials');
-    document.getElementById('progress-bar-container').style.display = 'flex';
     showNextImage();
 }
 
@@ -180,8 +176,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-    wordElement.style.marginBottom = '15px';
-
+	wordElement.style.marginBottom = '15px';
+	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -207,7 +203,7 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-        let input = document.createElement('input');
+		let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
@@ -215,7 +211,8 @@ function createInputFields(number, set) {
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-
+        
+       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -224,6 +221,10 @@ function createInputFields(number, set) {
 
     createButton('Submit', () => saveResponse(set));
 }
+
+preloadImages().then(() => {
+    showInstructions();
+});
 
 function createButton(text, onClick) {
     let button = document.createElement('button');
@@ -268,96 +269,56 @@ function displayImage(path, word) {
     createInputFields(4, { path: path, word: word });
 }
 
+//const typo = new Typo('en_US'); // Initialize Typo.js for spell-checking
+
 function validateDetails(details, word) {
     console.log('Validating details');
     if (details.length !== 4) return false;
 
     let detailSet = new Set();
-    let invalidDetails = [];
-
     for (let detail of details) {
         let detailText = detail.trim();
-        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
-
-        // Split detail into individual words for validation
-        let words = detailText.split(' ');
-        words.forEach(word => {
-            if (!typo.check(word)) {
-                invalidDetails.push(word);
-            }
-        });
-
+        // Check if the detail is empty or is the same as the descriptor word
+        if (!detailText || detailText.toUpperCase() === word) return false;
+        // Check if the detail contains only alphabetic characters
+        if (!/^[a-zA-Z]+$/.test(detailText)) return false;
+        // Check if the detail is a valid word (basic spell-checking)
+        if (!typo.check(detailText)) return false;
+        // Add detail to the set
         detailSet.add(detailText.toUpperCase());
     }
-
     // Ensure all details are unique
     if (detailSet.size !== details.length) return false;
-
-    // Check if there are any invalid details
-    if (invalidDetails.length > 0) {
-        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
-        return false;
-    }
-
     return true;
 }
 
 function saveResponse(set) {
     console.log('Saving response');
     let details = [];
-    let invalidDetails = [];
-    let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
-
     for (let i = 1; i <= 4; i++) {
-        let detail = document.getElementById(`detail${i}`).value.trim();
-        details.push(detail);
+        details.push(document.getElementById(`detail${i}`).value);
+    }
 
-        let words = detail.split(' ');
-        words.forEach(word => {
-            if (!typo.check(word)) {
-                invalidDetails.push(word);
-            }
+    if (validateDetails(details, set.word)) {
+        experiment.responses.push({
+            image: set.path,
+            word: set.word,
+            detail1: details[0],
+            detail2: details[1],
+            detail3: details[2],
+            detail4: details[3],
+            condition: set.condition,
+            folder: set.folder
         });
+        experiment.currentImage++;
+        if (experiment.currentImage >= experiment.imagesPerBlock) {
+            experiment.currentImage = 0;
+            experiment.currentBlock++;
+        }
+        showNextImage();
+    } else {
+        alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
-
-    if (invalidDetails.length > 0) {
-        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
-        return;
-    }
-
-    let data = {
-        participantName: experiment.participantName,
-        image: set.path,
-        word: set.word,
-        detail1: details[0],
-        detail2: details[1],
-        detail3: details[2],
-        detail4: details[3],
-        condition: set.condition,
-        folder: set.folder
-    };
-
-    fetch('https://iror-description-fr-output.uc.r.appspot.com/save-response', { // Replace with your actual backend URL
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.text())
-    .then(result => {
-        console.log('Success:', result);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-
-    experiment.currentImage++;
-    if (experiment.currentImage >= experiment.imagesPerBlock) {
-        experiment.currentImage = 0;
-        experiment.currentBlock++;
-    }
-    showNextImage();
 }
 
 function endExperiment() {
@@ -376,21 +337,12 @@ function displayText(text, elementId) {
     element.style.color = 'white';
 }
 
-function updateProgressBar() {
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
-    progressBarFill.style.width = `${progressPercentage}%`;
-}
-
-function saveResponsesToFile() {
-    console.log('Saving responses to file');
-    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
-    experiment.responses.forEach(response => {
-        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
-    });
-
-    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
+function getFormattedDate() {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}${day}${year}`;
 }
 
 function saveToFile(filename, data) {
@@ -401,11 +353,27 @@ function saveToFile(filename, data) {
     a.click();
 }
 
-function getFormattedDate() {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}${day}${year}`;
+// Start by preloading images and then showing instructions
+preloadImages().then(() => {
+    console.log('Images preloaded');
+    showInstructions();
+}).catch(error => {
+    console.error('Error preloading images:', error);
+});
+
+function updateProgressBar() {
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
+    progressBarFill.style.width = `${progressPercentage}%`;
 }
 
+function saveResponsesToFile() {
+    console.log('Saving responses to file');
+    let data = "image,word,detail1,detail2,detail3,detail4,condition,folder\n";
+    experiment.responses.forEach(response => {
+        data += `${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`;
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
