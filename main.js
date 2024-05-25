@@ -427,7 +427,6 @@ function saveResponse(set) {
     } else {
         alert('Please provide four valid and unique details. Do not use the descriptor word.');
     }
-}
 
 function endExperiment() {
     console.log('Ending experiment');
