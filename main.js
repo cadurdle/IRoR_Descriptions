@@ -93,14 +93,6 @@ function loadImagesFromPath(condition, set) {
     });
 }
 
-// Start by preloading images and then showing instructions
-preloadImages().then(() => {
-    console.log('Images preloaded');
-    showInstructions();
-}).catch(error => {
-    console.error('Error preloading images:', error);
-});
-
 function formatWord(filename) {
     let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
