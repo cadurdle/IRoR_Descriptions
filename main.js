@@ -361,7 +361,7 @@ function saveResponse(set) {
     }
 
     if (invalidDetails.length > 0) {
-        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries and provide four unique details. Do not use the descriptor word.`);
         return;
     }    
         let data = {
@@ -400,27 +400,6 @@ function saveResponse(set) {
     }
     showNextImage();
 }
-
-    if (validateDetails(details, set.word)) {
-        experiment.responses.push({
-            image: set.path,
-            word: set.word,
-            detail1: details[0],
-            detail2: details[1],
-            detail3: details[2],
-            detail4: details[3],
-            condition: set.condition,
-            folder: set.folder
-        });
-        experiment.currentImage++;
-        if (experiment.currentImage >= experiment.imagesPerBlock) {
-            experiment.currentImage = 0;
-            experiment.currentBlock++;
-        }
-        showNextImage();
-    } else {
-        alert('Please provide four valid and unique details. Do not use the descriptor word.');
-    }
 
 function endExperiment() {
     console.log('Ending experiment');
