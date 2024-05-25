@@ -1,6 +1,16 @@
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
+let experiment = {
+    participantName: '',
+    imageSets: [],
+    currentBlock: 0,
+    currentImage: 0,
+    blocks: 0,
+    imagesPerBlock: 0,
+    responses: []
+};
+
 window.onload = function () {
     typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
     fetchStudyData()
@@ -398,3 +408,6 @@ function getFormattedDate() {
     const year = date.getFullYear();
     return `${month}${day}${year}`;
 }
+
+document.getElementById('authorize_button').onclick = handleAuthClick;
+document.getElementById('signout_button').onclick = handleSignoutClick;
