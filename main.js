@@ -9,9 +9,6 @@ const experiment = {
     responses: []
 };
 
-document.getElementById('pause_button').onclick = pauseTask;
-document.getElementById('end_button').onclick = endTaskEarly;
-
 
 window.onload = function () {
     typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
@@ -433,12 +430,29 @@ function saveResponse(set) {
 }
 
 
+document.getElementById('pause_button').onclick = pauseExperiment;
+document.getElementById('end_button').onclick = endExperiment;
+
+function pauseExperiment() {
+    console.log('Pausing experiment');
+    saveResponsesToFile();
+}
 
 function endExperiment() {
     console.log('Ending experiment');
     showThankYouMessage();
     saveResponsesToFile();
-    downloadCSV();
+}
+
+function saveResponsesToFile() {
+    console.log('Saving responses to file');
+    let csvData = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        csvData += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, csvData);
 }
 
 function downloadCSV() {
