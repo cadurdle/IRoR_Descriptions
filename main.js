@@ -1,13 +1,17 @@
 const experiment = {
-    blocks: 12,
-    imagesPerBlock: 54,
-    congruentSets: 6,
-    incongruentSets: 6,
+    blocks: 1,
+    imagesPerBlock: 4,
+    congruentSets: 1,
+    incongruentSets: 1,
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
     responses: []
 };
+
+document.getElementById('pause_button').onclick = pauseTask;
+document.getElementById('end_button').onclick = endTaskEarly;
+
 
 window.onload = function () {
     typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
@@ -100,6 +104,24 @@ function formatWord(filename) {
     return name.toUpperCase();
 }
 
+let isPaused = false;
+
+function pauseTask() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        document.getElementById('pause_button').innerText = 'Resume';
+        console.log('Task paused');
+    } else {
+        document.getElementById('pause_button').innerText = 'Pause';
+        console.log('Task resumed');
+        showNextImage();
+    }
+}
+
+function endTaskEarly() {
+    console.log('Ending task early');
+    endExperiment();
+}
 
 function showInstructions() {
     const instructionsDiv = document.getElementById('instructions');
@@ -154,6 +176,8 @@ function showInstructionPages() {
         } else {
             instructionsDiv.innerHTML = '';
             document.getElementById('experiment').style.display = 'flex';
+            document.getElementById('pause_button').style.display = 'inline-block';
+            document.getElementById('end_button').style.display = 'inline-block';
             startTrials();
         }
     }
@@ -168,6 +192,11 @@ function startTrials() {
 }
 
 function showNextImage() {
+    if (isPaused) {
+        console.log('Task is paused, not showing next image');
+        return;
+    }
+
     console.log('Showing next image');
     if (experiment.currentBlock >= experiment.blocks) {
         endExperiment();
@@ -392,6 +421,14 @@ function saveResponse(set) {
     .catch(error => {
         console.error('Error:', error);
     });
+	let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
@@ -405,6 +442,26 @@ function endExperiment() {
     console.log('Ending experiment');
     showThankYouMessage();
     saveResponsesToFile();
+    downloadCSV();
+}
+
+function downloadCSV() {
+    console.log('Downloading CSV');
+    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
+
+function saveToFile(filename, data) {
+    let blob = new Blob([data], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
 }
 
 function showThankYouMessage() {
