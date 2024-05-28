@@ -442,8 +442,8 @@ function pauseExperiment() {
 
 function endExperiment() {
     console.log('Ending experiment');
-    showThankYouMessage();
     saveResponsesToFile();
+    showThankYouMessage();
 }
 
 function saveResponsesToFile() {
@@ -477,7 +477,11 @@ function saveToFile(filename, data) {
 }
 
 function showThankYouMessage() {
-    displayText("Thank you for participating!", 'instructions');
+    const thankYouMessageDiv = document.getElementById('thank_you_message');
+    thankYouMessageDiv.style.display = 'flex';
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('progress-bar-container').style.display = 'none';
+    document.querySelector('.control-buttons').style.display = 'none';
 }
 
 function displayText(text, elementId) {
@@ -494,13 +498,13 @@ function updateProgressBar() {
 
 function saveResponsesToFile() {
     console.log('Saving responses to file');
-    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    let csvData = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
     experiment.responses.forEach(response => {
-        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+        csvData += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
     });
 
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
+    saveToFile(filename, csvData);
 }
 
 function saveToFile(filename, data) {
