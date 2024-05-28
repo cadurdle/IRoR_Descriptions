@@ -377,11 +377,10 @@ function saveResponse(set) {
     let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
     for (let i = 1; i <= 4; i++) {
-     let detail = document.getElementById(`detail${i}`).value.trim();
+        let detail = document.getElementById(`detail${i}`).value.trim();
         details.push(detail);
 
-      //  details.push(document.getElementById(`detail${i}`).value);
-	 let words = detail.split(' ');
+        let words = detail.split(' ');
         words.forEach(word => {
             if (!typo.check(word)) {
                 invalidDetails.push(word);
@@ -392,8 +391,9 @@ function saveResponse(set) {
     if (invalidDetails.length > 0) {
         alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries and provide four unique details. Do not use the descriptor word.`);
         return;
-    }    
-        let data = {
+    }
+
+    let responseData = {
         participantName: experiment.participantName,
         image: set.path,
         word: set.word,
@@ -404,15 +404,15 @@ function saveResponse(set) {
         condition: set.condition,
         folder: set.folder
     };
-    
+
     fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', { // Replace with your actual backend URL
-    mode: 'cors',
-    credentials: 'include',
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
+        mode: 'cors',
+        credentials: 'include',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(responseData)
     })
     .then(response => response.text())
     .then(result => {
@@ -421,14 +421,14 @@ function saveResponse(set) {
     .catch(error => {
         console.error('Error:', error);
     });
-	let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+
+    let csvData = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
     experiment.responses.forEach(response => {
-        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+        csvData += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
     });
 
     const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, data);
-}
+    saveToFile(filename, csvData);
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
@@ -437,6 +437,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 function endExperiment() {
     console.log('Ending experiment');
