@@ -1,118 +1,17 @@
-const CLIENT_ID = '73444501568-vu66873dnqo15cjs5didr16t9d8mn03r.apps.googleusercontent.com';
-const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+const experiment = {
+    blocks: 1,
+    imagesPerBlock: 4,
+    congruentSets: 1,
+    incongruentSets: 1,
+    imageSets: [],
+    currentBlock: 0,
+    currentImage: 0,
+    responses: []
+};
 
-let tokenClient;
-let gapiInited = false;
-let gisInited = false;
+document.getElementById('pause_button').onclick = pauseTask;
+document.getElementById('end_button').onclick = endTaskEarly;
 
-document.getElementById('authorize_button').style.visibility = 'hidden';
-document.getElementById('signout_button').style.visibility = 'hidden';
-
-/**
- * Callback after api.js is loaded.
- */
-function gapiLoaded() {
-    gapi.load('client', initializeGapiClient);
-}
-
-/**
- * Callback after the API client is loaded. Loads the
- * discovery doc to initialize the API.
- */
-async function initializeGapiClient() {
-    await gapi.client.init({
-        discoveryDocs: [DISCOVERY_DOC],
-    });
-    gapiInited = true;
-    maybeEnableButtons();
-}
-
-/**
- * Callback after Google Identity Services are loaded.
- */
-function gisLoaded() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '', // defined later
-    });
-    gisInited = true;
-    maybeEnableButtons();
-}
-
-/**
- * Enables user interaction after all libraries are loaded.
- */
-function maybeEnableButtons() {
-    if (gapiInited && gisInited) {
-        document.getElementById('authorize_button').style.visibility = 'visible';
-    }
-}
-
-/**
- * Sign in the user upon button click.
- */
-function handleAuthClick() {
-    tokenClient.callback = async (resp) => {
-        if (resp.error !== undefined) {
-            throw (resp);
-        }
-        document.getElementById('signout_button').style.visibility = 'visible';
-        document.getElementById('authorize_button').innerText = 'Refresh';
-        await listMajors();
-    };
-
-    if (gapi.client.getToken() === null) {
-        // Prompt the user to select a Google Account and ask for consent to share their data
-        // when establishing a new session.
-        tokenClient.requestAccessToken({prompt: 'consent'});
-    } else {
-        // Skip display of account chooser and consent dialog for an existing session.
-        tokenClient.requestAccessToken({prompt: ''});
-    }
-}
-
-/**
- * Sign out the user upon button click.
- */
-function handleSignoutClick() {
-    const token = gapi.client.getToken();
-    if (token !== null) {
-        google.accounts.oauth2.revoke(token.access_token);
-        gapi.client.setToken('');
-        document.getElementById('content').innerText = '';
-        document.getElementById('authorize_button').innerText = 'Authorize';
-        document.getElementById('signout_button').style.visibility = 'hidden';
-    }
-}
-
-/**
- * Fetches data from the Google Sheets API.
- */
-async function listMajors() {
-    let response;
-    try {
-        // Fetch first 10 files
-        response = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: '1ZYTUoNtiYZLz7mFB1NxF_uYQ4RipcyDy_Vw_cBHmnI8',
-            range: 'Class Data!A2:E',
-        });
-    } catch (err) {
-        document.getElementById('content').innerText = err.message;
-        return;
-    }
-    const range = response.result;
-    if (!range || !range.values || range.values.length == 0) {
-        document.getElementById('content').innerText = 'No values found.';
-        return;
-    }
-    // Flatten to string to display
-    const output = range.values.reduce(
-        (str, row) => `${str}${row[0]}, ${row[4]}\n`,
-        'Name, Major:\n');
-    document.getElementById('content').innerText = output;
-}
 
 window.onload = function () {
     typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
@@ -125,9 +24,6 @@ window.onload = function () {
         .catch(error => {
             console.error('Error preloading images:', error);
         });
-
-    document.getElementById('pause_button').addEventListener('click', pauseTask);
-    document.getElementById('end_button').addEventListener('click', endExperimentEarly);
 };
 
 function fetchStudyData() {
@@ -139,6 +35,8 @@ function fetchStudyData() {
             return response.json();
         })
         .then(data => {
+            experiment.blocks = data.blocks || 12; // Set the number of blocks from the study data
+            experiment.imagesPerBlock = data.imagesPerBlock || 54; // Set the number of images per block from the study data
             return data.imageSets;
         })
         .catch(error => {
@@ -164,11 +62,65 @@ function preloadImages(imageSets) {
     return Promise.resolve();
 }
 
+function fetchImages(condition, setNumber) {
+    console.log(`Fetching images from /images/${condition}/${setNumber}`);
+    return fetch(`/images/${condition}/${setNumber}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(images => {
+            console.log(`Fetched images for ${condition} ${setNumber}:`, images);
+            return images;
+        })
+        .catch(error => {
+            console.error('Error fetching images:', error);
+            return [];
+        });
+}
+
+
+function loadImagesFromPath(condition, set) {
+    return fetchImages(condition, set).then(images => {
+        images.forEach(image => {
+            let word = formatWord(image);
+            experiment.imageSets.push({
+                path: `/images/${condition}/${set}/${image}`,
+                word: word,
+                condition: condition,
+                folder: set
+            });
+        });
+        console.log(`Loaded images from ${condition}_resources/${set}`);
+    });
+}
+
 function formatWord(filename) {
     let name = filename.split('.jpg')[0];
     name = name.replace(/[0-9]/g, '');
     name = name.replace(/_/g, ' ');
     return name.toUpperCase();
+}
+
+let isPaused = false;
+
+function pauseTask() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        document.getElementById('pause_button').innerText = 'Resume';
+        console.log('Task paused');
+    } else {
+        document.getElementById('pause_button').innerText = 'Pause';
+        console.log('Task resumed');
+        showNextImage();
+    }
+}
+
+function endTaskEarly() {
+    console.log('Ending task early');
+    endExperiment();
 }
 
 function showInstructions() {
@@ -224,8 +176,8 @@ function showInstructionPages() {
         } else {
             instructionsDiv.innerHTML = '';
             document.getElementById('experiment').style.display = 'flex';
-            document.getElementById('pause_button').style.display = 'block';
-            document.getElementById('end_button').style.display = 'block';
+            document.getElementById('pause_button').style.display = 'inline-block';
+            document.getElementById('end_button').style.display = 'inline-block';
             startTrials();
         }
     }
@@ -240,6 +192,11 @@ function startTrials() {
 }
 
 function showNextImage() {
+    if (isPaused) {
+        console.log('Task is paused, not showing next image');
+        return;
+    }
+
     console.log('Showing next image');
     if (experiment.currentBlock >= experiment.blocks) {
         endExperiment();
@@ -288,8 +245,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-    wordElement.style.marginBottom = '15px';
-
+	wordElement.style.marginBottom = '15px';
+	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -315,7 +272,7 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-        let input = document.createElement('input');
+		let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
@@ -323,7 +280,8 @@ function createInputFields(number, set) {
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-
+        
+       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -382,11 +340,13 @@ function validateDetails(details, word) {
 
     let detailSet = new Set();
     let invalidDetails = [];
-
+    
     for (let detail of details) {
         let detailText = detail.trim();
+        // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
-
+        // Check if the detail is a valid word (basic spell-checking)
+        if (!typo.check(detailText)) return false;
         // Split detail into individual words for validation
         let words = detailText.split(' ');
         words.forEach(word => {
@@ -397,11 +357,11 @@ function validateDetails(details, word) {
 
         detailSet.add(detailText.toUpperCase());
     }
-
+        
     // Ensure all details are unique
     if (detailSet.size !== details.length) return false;
-
-    // Check if there are any invalid details
+    
+        // Check if there are any invalid details
     if (invalidDetails.length > 0) {
         alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
         return false;
@@ -417,10 +377,11 @@ function saveResponse(set) {
     let typo = new Typo('en_US', undefined, undefined, { dictionaryPath: '/IRoR_Descriptions/typo/dictionaries' });
 
     for (let i = 1; i <= 4; i++) {
-        let detail = document.getElementById(`detail${i}`).value.trim();
+     let detail = document.getElementById(`detail${i}`).value.trim();
         details.push(detail);
 
-        let words = detail.split(' ');
+      //  details.push(document.getElementById(`detail${i}`).value);
+	 let words = detail.split(' ');
         words.forEach(word => {
             if (!typo.check(word)) {
                 invalidDetails.push(word);
@@ -429,11 +390,10 @@ function saveResponse(set) {
     }
 
     if (invalidDetails.length > 0) {
-        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
+        alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries and provide four unique details. Do not use the descriptor word.`);
         return;
-    }
-
-    let data = {
+    }    
+        let data = {
         participantName: experiment.participantName,
         image: set.path,
         word: set.word,
@@ -444,8 +404,31 @@ function saveResponse(set) {
         condition: set.condition,
         folder: set.folder
     };
+    
+    fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', { // Replace with your actual backend URL
+    mode: 'cors',
+    credentials: 'include',
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.text())
+    .then(result => {
+        console.log('Success:', result);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+	let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
 
-    experiment.responses.push(data); // Store response locally for pausing or ending
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
 
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
@@ -457,10 +440,28 @@ function saveResponse(set) {
 
 function endExperiment() {
     console.log('Ending experiment');
-    document.getElementById('pause_button').style.display = 'none';
-    document.getElementById('end_button').style.display = 'none';
     showThankYouMessage();
     saveResponsesToFile();
+    downloadCSV();
+}
+
+function downloadCSV() {
+    console.log('Downloading CSV');
+    let data = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        data += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, data);
+}
+
+function saveToFile(filename, data) {
+    let blob = new Blob([data], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
 }
 
 function showThankYouMessage() {
@@ -505,17 +506,3 @@ function getFormattedDate() {
     const year = date.getFullYear();
     return `${month}${day}${year}`;
 }
-
-function pauseTask() {
-    console.log('Pausing task');
-    saveResponsesToFile(); // Save responses to file
-    alert('The task has been paused. You can resume it later.');
-}
-
-function endExperimentEarly() {
-    console.log('Ending experiment early');
-    endExperiment(); // Call the existing endExperiment function
-}
-
-document.getElementById('authorize_button').onclick = handleAuthClick;
-document.getElementById('signout_button').onclick = handleSignoutClick;
