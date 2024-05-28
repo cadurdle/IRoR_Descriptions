@@ -405,6 +405,8 @@ function saveResponse(set) {
         folder: set.folder
     };
 
+    experiment.responses.push(responseData); // Store response data
+
     fetch('https://script.google.com/macros/s/AKfycbwkDzI3Kz1MvMJUdjY5orITUYiJPhLkvNNtvcU6x6l81ndl74A9sy1RKnbY9Nz_pCqHgw/exec', { // Replace with your actual backend URL
         mode: 'cors',
         credentials: 'include',
@@ -422,14 +424,6 @@ function saveResponse(set) {
         console.error('Error:', error);
     });
 
-    let csvData = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
-    experiment.responses.forEach(response => {
-        csvData += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
-    });
-
-    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
-    saveToFile(filename, csvData);
-
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
         experiment.currentImage = 0;
@@ -437,6 +431,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 
 function endExperiment() {
