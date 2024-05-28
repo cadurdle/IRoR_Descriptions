@@ -185,6 +185,8 @@ function showInstructionPages() {
 function startTrials() {
     console.log('Starting trials');
     document.getElementById('progress-bar-container').style.display = 'flex';
+    document.getElementById('pause_button').style.display = 'block';
+    document.getElementById('end_button').style.display = 'block';
     showNextImage();
 }
 
