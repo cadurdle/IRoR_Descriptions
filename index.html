@@ -6,6 +6,11 @@
     <title>IRoR Image Description Task</title>
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="stylesheet" href="styles.css">
+     <script src="jatos.js"></script>
+    <script src="jspsych/jspsych.js"></script>
+    <script src="jspsych/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/plugin-image-keyboard-response.js"></script>
+    <script src="jspsych/plugin-preload.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/gh/cadurdle/IRoR_Descriptions/typo/typo.js"></script>
@@ -74,6 +79,22 @@
     </div>
 
     <script>
+     /* initialize jsPsych */
+    var jsPsych = initJsPsych({
+      on_trial_start: jatos.addAbortButton,
+      on_finish: () => jatos.endStudy(jsPsych.data.get().json())
+    });
+
+    /* create timeline */
+    var timeline = [];
+
+    /* preload images */
+    var preload = {
+      type: jsPsychPreload,
+      images: ['img/blue.png', 'img/orange.png']
+    };
+    
+    timeline.push(preload);
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Document loaded, setting up event listeners.');
         });
