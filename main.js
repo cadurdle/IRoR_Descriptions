@@ -432,6 +432,7 @@ function saveResponse(set) {
     })
     .catch(error => {
         console.error('Error:', error);
+        alert(`There was an error with the request: ${error.message}`);
     });
 
     experiment.currentImage++;
