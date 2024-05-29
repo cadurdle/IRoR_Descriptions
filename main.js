@@ -418,7 +418,8 @@ function saveResponse(set) {
     showNextImage();
 }
 
-document.getElementById('pause_button').onclick = pauseExperiment;
+document.getElementById('pause_button').onclick = pauseTask;
+document.getElementById('resume_button').onclick = resumeTask;
 document.getElementById('end_button').onclick = endExperiment;
 
 function pauseExperiment() {
