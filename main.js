@@ -103,46 +103,19 @@ let isPaused = false;
 
 function pauseTask() {
     isPaused = true;
-    console.log('Task paused');
     document.getElementById('pause_button').style.display = 'none';
-    document.getElementById('end_button').style.display = 'none';
-    document.getElementById('experiment').style.display = 'none';
-    document.getElementById('progress-bar-container').style.display = 'none';
-    
-    // Show the black screen with resume message
-    const pauseScreen = document.createElement('div');
-    pauseScreen.id = 'pauseScreen';
-    pauseScreen.style.position = 'fixed';
-    pauseScreen.style.top = '0';
-    pauseScreen.style.left = '0';
-    pauseScreen.style.width = '100%';
-    pauseScreen.style.height = '100%';
-    pauseScreen.style.backgroundColor = 'black';
-    pauseScreen.style.color = 'white';
-    pauseScreen.style.display = 'flex';
-    pauseScreen.style.flexDirection = 'column';
-    pauseScreen.style.justifyContent = 'center';
-    pauseScreen.style.alignItems = 'center';
-    pauseScreen.innerHTML = `
-        <p>You have paused the experiment. A CSV file has been downloaded. Please keep this browser window/tab open so you can resume the task. Closing the web browser/tab will end the experiment and you would have to start over. If you decide to not resume, then please email Courtney your CSV file at <a href="mailto:cadurdle@ucsb.edu" style="color: white;">cadurdle@ucsb.edu</a>.</p>
-        <button id="resume_button" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Resume</button>
-    `;
-    document.body.appendChild(pauseScreen);
-    
-    document.getElementById('resume_button').onclick = resumeTask;
-
-    // Save responses to file
+    document.getElementById('resume_button').style.display = 'inline-block';
+    document.getElementById('pause_screen').style.display = 'flex';
     saveResponsesToFile();
+    console.log('Task paused');
 }
 
 function resumeTask() {
     isPaused = false;
+    document.getElementById('pause_button').style.display = 'inline-block';
+    document.getElementById('resume_button').style.display = 'none';
+    document.getElementById('pause_screen').style.display = 'none';
     console.log('Task resumed');
-    document.getElementById('pause_button').style.display = 'block';
-    document.getElementById('end_button').style.display = 'block';
-    document.getElementById('experiment').style.display = 'block';
-    document.getElementById('progress-bar-container').style.display = 'block';
-    document.getElementById('pauseScreen').remove();
     showNextImage();
 }
 
