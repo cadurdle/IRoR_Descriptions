@@ -1,8 +1,8 @@
 const experiment = {
-    blocks: 1,
-    imagesPerBlock: 4,
-    congruentSets: 1,
-    incongruentSets: 1,
+    blocks: 12,
+    imagesPerBlock: 54,
+    congruentSets: 6,
+    incongruentSets: 6,
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
@@ -428,8 +428,6 @@ function saveResponse(set) {
     }
     showNextImage();
 }
-
-
 
 document.getElementById('pause_button').onclick = pauseTask;
 document.getElementById('resume_button').onclick = resumeTask;
