@@ -412,9 +412,20 @@ function saveResponse(set) {
         },
         body: JSON.stringify(responseData)
     })
+    .then(response => {
+        console.log('Raw response:', response);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text(); // Get raw text response
+    })
     .then(text => {
         console.log('Response text:', text);
-        return JSON.parse(text); // Manually parse JSON to catch syntax errors
+        try {
+            return JSON.parse(text); // Manually parse JSON to catch syntax errors
+        } catch (e) {
+            throw new Error(`Error parsing JSON: ${e.message}`);
+        }
     })
     .then(result => {
         console.log('Success:', result);
