@@ -349,18 +349,19 @@ function validateDetails(details, word) {
         let detailText = detail.trim().toUpperCase();
         // Check if the detail is empty or is the same as the descriptor word
         if (!detailText || detailText === descriptorWord) return false;
-        // Check if the detail is a valid word (basic spell-checking)
-        if (!typo.check(detailText)) return false;
         // Check for duplicates
         if (detailSet.has(detailText)) return false;
 
-        // Split detail into individual words for validation
+        // Check if the detail contains the descriptor word
+        if (detailText.includes(descriptorWord)) return false;
+
+        // Validate each word in the detail
         let words = detailText.split(' ');
-        words.forEach(word => {
+        for (let word of words) {
             if (!typo.check(word)) {
                 invalidDetails.push(word);
             }
-        });
+        }
 
         detailSet.add(detailText);
     }
@@ -387,12 +388,13 @@ function saveResponse(set) {
         let detail = document.getElementById(`detail${i}`).value.trim();
         details.push(detail);
 
+        // Validate each word in the detail
         let words = detail.split(' ');
-        words.forEach(word => {
+        for (let word of words) {
             if (!typo.check(word)) {
                 invalidDetails.push(word);
             }
-        });
+        }
     }
 
     if (invalidDetails.length > 0) {
@@ -426,6 +428,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 
 document.getElementById('pause_button').onclick = pauseTask;
