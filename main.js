@@ -343,13 +343,17 @@ function validateDetails(details, word) {
 
     let detailSet = new Set();
     let invalidDetails = [];
+    let descriptorWord = word.toUpperCase();
 
     for (let detail of details) {
-        let detailText = detail.trim();
+        let detailText = detail.trim().toUpperCase();
         // Check if the detail is empty or is the same as the descriptor word
-        if (!detailText || detailText.toUpperCase() === word.toUpperCase()) return false;
+        if (!detailText || detailText === descriptorWord) return false;
         // Check if the detail is a valid word (basic spell-checking)
         if (!typo.check(detailText)) return false;
+        // Check for duplicates
+        if (detailSet.has(detailText)) return false;
+
         // Split detail into individual words for validation
         let words = detailText.split(' ');
         words.forEach(word => {
@@ -358,7 +362,7 @@ function validateDetails(details, word) {
             }
         });
 
-        detailSet.add(detailText.toUpperCase());
+        detailSet.add(detailText);
     }
 
     // Ensure all details are unique
@@ -396,6 +400,11 @@ function saveResponse(set) {
         return;
     }
 
+    if (!validateDetails(details, set.word)) {
+        alert('Details are either invalid, repeated, or match the descriptor word. Please provide four unique and valid details.');
+        return;
+    }
+
     let responseData = {
         participantName: experiment.participantName,
         image: set.path,
@@ -417,6 +426,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 document.getElementById('pause_button').onclick = pauseTask;
 document.getElementById('resume_button').onclick = resumeTask;
