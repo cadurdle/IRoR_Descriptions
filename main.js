@@ -412,7 +412,10 @@ function saveResponse(set) {
         },
         body: JSON.stringify(responseData)
     })
-    .then(response => response.json())
+    .then(text => {
+        console.log('Response text:', text);
+        return JSON.parse(text); // Manually parse JSON to catch syntax errors
+    })
     .then(result => {
         console.log('Success:', result);
     })
