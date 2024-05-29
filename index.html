@@ -6,6 +6,8 @@
     <title>IRoR Image Description Task</title>
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/gh/cadurdle/IRoR_Descriptions/typo/typo.js"></script>
     <script src="main.js" defer></script>
     <style>
@@ -40,6 +42,23 @@
             display: none;
             z-index: 1000;
         }
+
+        #pause_screen {
+            color: white;
+            background-color: black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -64,7 +83,12 @@
     <!-- Pause and End Buttons -->
     <div class="control-buttons">
         <button id="pause_button" style="display: none;">Pause</button>
+        <button id="resume_button" style="display: none;">Resume</button>
         <button id="end_button" style="display: none;">End Task</button>
+    </div>
+
+    <div id="pause_screen">
+        <p>You have paused the experiment. A CSV file has been downloaded. Please keep this browser window/tab open so you can resume the task. Closing the web browser/tab will end the experiment and you would have to start over. If you decide to not resume, then please email Courtney your CSV file at <a href="mailto:cadurdle@ucsb.edu">cadurdle@ucsb.edu</a>.</p>
     </div>
 
     <div id="thank_you_message" class="thank-you-message">
@@ -77,16 +101,17 @@
 
         // Event listener for the pause button
         document.getElementById('pause_button').addEventListener('click', function() {
-            // Pause logic here
-            console.log('Experiment paused');
-            this.style.display = 'none';
-            document.getElementById('end_button').style.display = 'block';
+            pauseTask();
+        });
+
+        // Event listener for the resume button
+        document.getElementById('resume_button').addEventListener('click', function() {
+            resumeTask();
         });
 
         // Event listener for the end button
         document.getElementById('end_button').addEventListener('click', function() {
-            // End task logic here
-            console.log('Experiment ended by the participant');
+            endExperiment();
         });
 
         // Example of setting up the instructions
