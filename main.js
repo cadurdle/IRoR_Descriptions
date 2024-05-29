@@ -407,7 +407,7 @@ function saveResponse(set) {
     experiment.responses.push(responseData); // Store response data
 
     fetch('https://script.google.com/macros/library/d/1Qexocmty-aLUDLG3jM8njzT0LG2QX4BeqIq2G-kfaQJvMoMkwZxy18v5/1', { // Replace with your actual backend URL
-        mode: 'cors',
+        mode: 'no-cors',
         credentials: 'include',
         method: 'POST',
         headers: {
