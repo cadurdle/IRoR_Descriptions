@@ -410,36 +410,6 @@ function saveResponse(set) {
 
     experiment.responses.push(responseData); // Store response data
 
-    fetch('https://script.google.com/macros/s/AKfycbyyg42XkHzOMiVYOrRTWtZxeBLXEtLIVgFzxQOLV1m3sTw0TdlUjvFQTOJHu_qvhYqfiA/exec', { // Replace with your actual backend URL
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(responseData)
-    })
-    .then(response => {
-        console.log('Raw response:', response);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.text(); // Get raw text response
-    })
-    .then(text => {
-        console.log('Response text:', text);
-        try {
-            return JSON.parse(text); // Manually parse JSON to catch syntax errors
-        } catch (e) {
-            throw new Error(`Error parsing JSON: ${e.message}`);
-        }
-    })
-    .then(result => {
-        console.log('Success:', result);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(`There was an error with the request: ${error.message}`);
-    });
-
     experiment.currentImage++;
     if (experiment.currentImage >= experiment.imagesPerBlock) {
         experiment.currentImage = 0;
@@ -448,23 +418,13 @@ function saveResponse(set) {
     showNextImage();
 }
 
-document.getElementById('pause_button').onclick = pauseExperiment;
+document.getElementById('pause_button').onclick = pauseTask;
+document.getElementById('resume_button').onclick = resumeTask;
 document.getElementById('end_button').onclick = endExperiment;
 
 function pauseExperiment() {
     console.log('Pausing experiment');
     saveResponsesToFile();
-    document.getElementById('pause_screen').style.display = 'flex';
-    document.getElementById('pause_button').style.display = 'none';
-    document.getElementById('resume_button').style.display = 'block';
-}
-
-function resumeExperiment() {
-    console.log('Resuming experiment');
-    document.getElementById('pause_screen').style.display = 'none';
-    document.getElementById('pause_button').style.display = 'block';
-    document.getElementById('resume_button').style.display = 'none';
-    showNextImage();
 }
 
 function endExperiment() {
