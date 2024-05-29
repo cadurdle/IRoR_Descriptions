@@ -9,6 +9,7 @@ const experiment = {
     responses: []
 };
 
+
 window.onload = function () {
     typo = new Typo("en_US", undefined, undefined, { dictionaryPath: "/IRoR_Descriptions/typo/dictionaries", asyncLoad: false });
     fetchStudyData()
@@ -76,6 +77,7 @@ function fetchImages(condition, setNumber) {
             return [];
         });
 }
+
 
 function loadImagesFromPath(condition, set) {
     return fetchImages(condition, set).then(images => {
@@ -242,8 +244,8 @@ function createInputFields(number, set) {
     wordElement.style.color = 'orange';
     wordElement.style.fontSize = '24px';
     wordElement.style.marginTop = '15px';
-    wordElement.style.marginBottom = '15px';
-
+	wordElement.style.marginBottom = '15px';
+	
     topDiv.appendChild(img);
     topDiv.appendChild(wordElement);
 
@@ -269,7 +271,7 @@ function createInputFields(number, set) {
         label.style.marginRight = '10px';
         label.setAttribute('for', `detail${i + 1}`);
 
-        let input = document.createElement('input');
+		let input = document.createElement('input');
         input.type = 'text';
         input.id = `detail${i + 1}`;
         input.name = `detail${i + 1}`;
@@ -277,7 +279,8 @@ function createInputFields(number, set) {
         input.style.flex = '1';
         input.style.width = '300px'; // Adjusted width
         input.style.height = '20px'; // Adjusted height
-
+        
+       
         container.appendChild(label);
         container.appendChild(input);
         bottomDiv.appendChild(container);
@@ -336,7 +339,7 @@ function validateDetails(details, word) {
 
     let detailSet = new Set();
     let invalidDetails = [];
-
+    
     for (let detail of details) {
         let detailText = detail.trim();
         // Check if the detail is empty or is the same as the descriptor word
@@ -353,11 +356,11 @@ function validateDetails(details, word) {
 
         detailSet.add(detailText.toUpperCase());
     }
-
+        
     // Ensure all details are unique
     if (detailSet.size !== details.length) return false;
-
-    // Check if there are any invalid details
+    
+        // Check if there are any invalid details
     if (invalidDetails.length > 0) {
         alert(`The following words may have typos or be invalid: ${invalidDetails.join(', ')}. Please check your entries.`);
         return false;
@@ -404,7 +407,7 @@ function saveResponse(set) {
     experiment.responses.push(responseData); // Store response data
 
     fetch('https://script.google.com/macros/library/d/1Qexocmty-aLUDLG3jM8njzT0LG2QX4BeqIq2G-kfaQJvMoMkwZxy18v5/1', { // Replace with your actual backend URL
-        mode: 'cors',
+        mode: 'no-cors',
         credentials: 'include',
         method: 'POST',
         headers: {
@@ -412,7 +415,7 @@ function saveResponse(set) {
         },
         body: JSON.stringify(responseData)
     })
-    .then(response => response.json())
+    .then(response => response.text())
     .then(result => {
         console.log('Success:', result);
     })
@@ -427,6 +430,7 @@ function saveResponse(set) {
     }
     showNextImage();
 }
+
 
 document.getElementById('pause_button').onclick = pauseExperiment;
 document.getElementById('end_button').onclick = endExperiment;
@@ -490,6 +494,25 @@ function updateProgressBar() {
     const progressBarFill = document.getElementById('progress-bar-fill');
     const progressPercentage = (experiment.currentBlock * experiment.imagesPerBlock + experiment.currentImage) / (experiment.blocks * experiment.imagesPerBlock) * 100;
     progressBarFill.style.width = `${progressPercentage}%`;
+}
+
+function saveResponsesToFile() {
+    console.log('Saving responses to file');
+    let csvData = "participantName,image,word,detail1,detail2,detail3,detail4,condition,folder\n"; // Updated headers
+    experiment.responses.forEach(response => {
+        csvData += `${response.participantName},${response.image},${response.word},${response.detail1},${response.detail2},${response.detail3},${response.detail4},${response.condition},${response.folder}\n`; // Included participantName
+    });
+
+    const filename = `${experiment.participantName}_IRoR_Descriptions_${getFormattedDate()}.csv`;
+    saveToFile(filename, csvData);
+}
+
+function saveToFile(filename, data) {
+    let blob = new Blob([data], { type: 'text/csv' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
 }
 
 function getFormattedDate() {
