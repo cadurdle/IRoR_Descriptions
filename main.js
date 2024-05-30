@@ -1,8 +1,8 @@
 const experiment = {
-    blocks: 12,
+    blocks: 6,
     imagesPerBlock: 54,
     congruentSets: 6,
-    incongruentSets: 6,
+    incongruentSets: 0,
     imageSets: [],
     currentBlock: 0,
     currentImage: 0,
@@ -31,7 +31,7 @@ function fetchStudyData() {
             return response.json();
         })
         .then(data => {
-            experiment.blocks = data.blocks || 12; // Set the number of blocks from the study data
+            experiment.blocks = data.blocks || 6; // Set the number of blocks from the study data
             experiment.imagesPerBlock = data.imagesPerBlock || 54; // Set the number of images per block from the study data
             return data.imageSets;
         })
@@ -43,17 +43,19 @@ function fetchStudyData() {
 
 function preloadImages(imageSets) {
     imageSets.forEach(set => {
-        set.images.sort(); // Sort images alphabetically
-        set.images.forEach(image => {
-            let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
-            let word = formatWord(image);
-            experiment.imageSets.push({
-                path: path,
-                word: word,
-                condition: set.condition,
-                folder: set.setNumber
+        if (set.condition === 'congruent_resources') { // Only include congruent_resources
+            set.images.sort(); // Sort images alphabetically
+            set.images.forEach(image => {
+                let path = `/IRoR_Descriptions/images/${set.condition}/${set.setNumber}/${image}`;
+                let word = formatWord(image);
+                experiment.imageSets.push({
+                    path: path,
+                    word: word,
+                    condition: set.condition,
+                    folder: set.setNumber
+                });
             });
-        });
+        }
     });
     return Promise.resolve();
 }
