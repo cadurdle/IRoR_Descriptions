@@ -60,6 +60,21 @@ function preloadImages(imageSets) {
     return Promise.resolve();
 }
 
+// Initialize lab.js and Pavlovia plugin
+const { lab, Pavlovia } = window;
+
+// Create the main experiment sequence
+const experimentSequence = new lab.flow.Sequence({
+    content: [
+        // Add your experiment content here
+    ],
+    plugins: [new Pavlovia()]
+});
+
+// Run the experiment
+experimentSequence.run();
+
+
 function fetchImages(condition, setNumber) {
     console.log(`Fetching images from /images/${condition}/${setNumber}`);
     return fetch(`/images/${condition}/${setNumber}`)
