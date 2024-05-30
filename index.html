@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRoR Image Description Task</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="stylesheet" href="styles.css">
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -62,6 +61,21 @@
         }
     </style>
 </head>
+
+<form id="FORM_ID" method="POST" action="https://script.google.com/macros/s/AKfycbx16hNoOmpMlcGSDEZKytyImzqE15792FbpaKeo92Rd9LajnnDL3PkRzq3cXC3VtbLFpQ/execL">
+  <input name="participantName" type="text" placeholder="participantName" required>
+  <input name="image" type="text" placeholder="image" required>
+  <input name="word" type="text" placeholder="word" required>
+  <input name="detail1" type="text" placeholder="detail1" required>
+  <input name="detail2" type="text" placeholder="detail2" required>
+  <input name="detail3" type="text" placeholder="Ndetail3" required>
+  <input name="detail4" type="text" placeholder="detail4" required>
+  <input name="condition" type="text" placeholder="condition" required>
+  <input name="folder" type="text" placeholder="folder" required>
+  <button type="submit">Send</button>
+
+</form>
+
 <body>
     <div id="container">
         <!-- Instructions Section -->
@@ -122,3 +136,5 @@
     </script>
 </body>
 </html>
+
+
