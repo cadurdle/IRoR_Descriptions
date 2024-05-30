@@ -1,0 +1,113 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+#container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 55vh; /* Adjusted height */
+}
+
+#instructions, #experiment {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center elements vertically */
+    align-items: center;
+    height: 100%;
+}
+
+.instructions-content {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.next-button, .submit-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #ff6600;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.next-button:hover, .submit-button:hover {
+    background-color: #cc5200;
+}
+
+.word {
+    color: orange;
+    font-size: 24px;
+    margin-top: 30px;
+    margin-bottom: 50px; /* Increase this value to add more space */
+}
+
+
+.input-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px; /* Increased margin between input containers */
+}
+
+input[type="text"] {
+    width: 250px;
+    height: 20px;
+    margin-left: 10px;
+}
+
+#progress-bar-container {
+    position: fixed;
+    bottom: 10%; /* Move the progress bar slightly up from the bottom */
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Center the progress bar horizontally */
+    align-items: center; /* Center the progress bar vertically */
+}
+
+#progress-bar-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%; /* Set the width you want for the progress bar wrapper */
+}
+
+#progress-label {
+    margin-right: 10px;
+    font-size: 14px;
+    color: white; /* Change the color of the progress label to white */
+}
+
+#progress-bar {
+    width: 100%; /* Use 100% width to fill the wrapper */
+    height: 30px; /* Increase the height for a bigger box */
+    background-color: black; /* Set the inside color to black */
+    border: 2px solid blue; /* Set the outline color to blue */
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+#progress-bar-fill {
+    width: 0;
+    height: 100%; /* Use 100% height to fill the progress bar */
+    background-color: blue; /* Change the color of the progress bar fill to blue */
+    transition: width 0.3s;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRoR Image Description Task</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/cadurdle/IRoR_Descriptions/typo/typo.js"></script>
+    <script src="main.js" defer></script>
+    <style>
+        .control-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .thank-you-message {
+            color: white;
+            background-color: black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        #pause_screen {
+            color: white;
+            background-color: black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+<!-- Add jQuery and Pavlovia plugins -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script type="text/javascript" src="https://pavlovia.org/lib/labjs-2017.2.0/lab.dev.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://pavlovia.org/lib/labjs-2017.2.0/lab.css">
+    <script type="text/javascript" src="https://pavlovia.org/lib/labjs-pavlovia-3.0.0.js"></script>    
+</head>
+
+<form id="FORM_ID" method="POST" action="https://script.google.com/macros/s/AKfycbx16hNoOmpMlcGSDEZKytyImzqE15792FbpaKeo92Rd9LajnnDL3PkRzq3cXC3VtbLFpQ/exec">
+  <input name="participantName" type="text" placeholder="participantName" required>
+  <input name="image" type="text" placeholder="image" required>
+  <input name="word" type="text" placeholder="word" required>
+  <input name="detail1" type="text" placeholder="detail1" required>
+  <input name="detail2" type="text" placeholder="detail2" required>
+  <input name="detail3" type="text" placeholder="detail3" required>
+  <input name="detail4" type="text" placeholder="detail4" required>
+  <input name="condition" type="text" placeholder="condition" required>
+  <input name="folder" type="text" placeholder="folder" required>
+  <button type="submit">Send</button>
+
+</form>
+
+<body>
+    <div id="container">
+        <!-- Instructions Section -->
+        <div id="instructions" class="section instructions-content"></div>
+
+        <!-- Experiment Section -->
+        <div id="experiment" class="section experiment-content" style="display:none;"></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progress-bar-container" style="display:none;">
+        <div id="progress-bar-wrapper">
+            <span id="progress-label">Progress:</span>
+            <div id="progress-bar">
+                <div id="progress-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pause_screen">
+        <p>You have paused the experiment. A CSV file has been downloaded.</p>
+        <p>Please keep this browser window/tab open so you can resume the task.</p>
+        <p>Closing the web browser/tab will end the experiment and you would have to start over.</p>
+        <p>If you decide to not resume, then please email Courtney your CSV file at  <a href="mailto:cadurdle@ucsb.edu">cadurdle@ucsb.edu</a>.</p>
+        <button id="resume_button" style="display: none;">Resume</button>
+    </div>
+
+    <!-- Pause and End Buttons -->
+    <div class="control-buttons">
+        <button id="pause_button" style="display: none;">Pause</button>
+        <button id="end_button" style="display: none;">End Task</button>
+    </div>
+
+    <div id="thank_you_message" class="thank-you-message">
+        Thank you for participating!<br>Please email your downloaded csv file to Courtney Durdle at <a href="mailto:cadurdle@ucsb.edu">cadurdle@ucsb.edu</a>. Thank you!
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Document loaded, setting up event listeners.');
+
+        // Event listener for the pause button
+        document.getElementById('pause_button').addEventListener('click', pauseExperiment);
+
+        // Event listener for the resume button
+        document.getElementById('resume_button').addEventListener('click', resumeExperiment);
+
+    });
+
+    function startExperiment() {
+        document.getElementById('instructions').style.display = 'none';
+        document.getElementById('experiment').style.display = 'block';
+        document.getElementById('pause_button').style.display = 'block';
+        // Start experiment logic here
+        console.log('Experiment started');
+    }
+    </script>
+</body>
+</html>
+
+
